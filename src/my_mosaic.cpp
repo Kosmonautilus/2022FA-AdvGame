@@ -1,0 +1,8 @@
+
+void MyMosaicInit() {
+    
+}
+
+void MyMosaicUpdate() {
+
+}
