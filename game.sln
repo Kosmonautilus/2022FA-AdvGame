@@ -1,0 +1,77 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32210.238
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "game", "build\game.exe", "{307CB3A4-7391-4301-81C2-5704FF3B6CD2}"
+	ProjectSection(DebuggerProjectSystem) = preProject
+		PortSupplier = 00000000-0000-0000-0000-000000000000
+		Executable = F:\Game Dev\Mosaic Projects\2022FA AdvGame Assignment 1\build\game.exe
+		RemoteMachine = DESKTOP-DRKDFUP
+		StartingDirectory = F:\Game Dev\Mosaic Projects\2022FA AdvGame Assignment 1\build
+		Environment = Default
+		LaunchingEngine = 00000000-0000-0000-0000-000000000000
+		UseLegacyDebugEngines = No
+		LaunchSQLEngine = No
+		AttachLaunchAction = No
+		IORedirection = Auto
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{828249B3-586F-4543-9777-1C9CC94BF823}"
+	ProjectSection(SolutionItems) = preProject
+		src\audio.cpp = src\audio.cpp
+		src\audio.h = src\audio.h
+		src\camera.h = src\camera.h
+		src\collections.h = src\collections.h
+		src\commonlib.h = src\commonlib.h
+		src\dynamic_array.h = src\dynamic_array.h
+		src\entity.cpp = src\entity.cpp
+		src\entity.h = src\entity.h
+		src\file_io.cpp = src\file_io.cpp
+		src\font.cpp = src\font.cpp
+		src\game.cpp = src\game.cpp
+		src\game.h = src\game.h
+		src\game_code.cpp = src\game_code.cpp
+		src\input.cpp = src\input.cpp
+		src\input.h = src\input.h
+		src\linux.cpp = src\linux.cpp
+		src\linux_api.cpp = src\linux_api.cpp
+		src\log.cpp = src\log.cpp
+		src\log.h = src\log.h
+		src\mesh.cpp = src\mesh.cpp
+		src\mesh.h = src\mesh.h
+		src\mosaic.cpp = src\mosaic.cpp
+		src\mosaic.h = src\mosaic.h
+		src\examples\my_game.cpp = src\examples\my_game.cpp
+		src\my_memory.h = src\my_memory.h
+		src\my_mosaic.cpp = src\my_mosaic.cpp
+		src\network.cpp = src\network.cpp
+		src\network.h = src\network.h
+		src\osx.m = src\osx.m
+		src\render.cpp = src\render.cpp
+		src\render.h = src\render.h
+		src\render_dx11.cpp = src\render_dx11.cpp
+		src\render_dx12.cpp = src\render_dx12.cpp
+		src\render_opengl.cpp = src\render_opengl.cpp
+		src\types.h = src\types.h
+		src\ui.cpp = src\ui.cpp
+		src\ui.h = src\ui.h
+		src\windows.cpp = src\windows.cpp
+		src\windows_api.cpp = src\windows_api.cpp
+		src\windows_input.cpp = src\windows_input.cpp
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{307CB3A4-7391-4301-81C2-5704FF3B6CD2}.Release|x64.ActiveCfg = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1E87C629-4A74-44B9-A8BF-FF54B01EDCFD}
+	EndGlobalSection
+EndGlobal
