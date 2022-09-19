@@ -57,13 +57,15 @@ struct Entity
 struct Player
 {
     Entity entity;
-    uint8 health;
+    uint8 lives;
     vec4 color;
 };
 
 struct Enemy
 {
     Entity entity;
+    int8 direction;
+
 };
 
 struct Bullet
@@ -213,11 +215,11 @@ void LoadGameSprites()
 
 void UpdatePositions()
 {
+    //Loop over enemies, make them move down the screen. If at edge of bounds then flip direction and move down 1.
     for (int i = 0; i < &Data->entityManager.count; i++)
     {
-        int8 direction; //Make 1 or -1 depending on direction entity is moving
         Enemy* e = (Enemy*)GetEntity(&Data->entityManager, enemyHandle);
-        e->entity.position = e->entity.lastPosition + V2(direction, 0);
+        e->entity.position = e->entity.lastPosition + V2(0, 0);
         e->entity.lastPosition = e->entity.position;
     }
 }
@@ -235,12 +237,15 @@ void MyInit() {
 
     Data = (GameData *)Game->myData;
 
-    EntityManagerInit(&Data->entityManager);
-
-
     //Load sprites
     LoadGameSprites();
 
+    EntityManagerInit(&Data->entityManager);
+
+    EntityHandle playerHandle = AddEntity(&Data->entityManager, EntityType_Player);
+    Player* p = (Player*)GetEntity(&Data->entityManager, playerHandle);
+    p->entity.position = V2();
+    p->lives = 3;
 }
 
 
@@ -248,4 +253,6 @@ void MyInit() {
 void MyGameUpdate() {
     ClearColor(RGB(0.0f, 0.0f, 0.0f));
 
+    Player* p = (Player*)GetEntity(&Data->entityManager, playerHandle);
+    
 }
