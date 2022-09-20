@@ -3,7 +3,6 @@ enum EntityType
 {
     EntityType_Base,
     EntityType_Player,
-    EntityType_Bullet,
     EntityType_Enemy,
     EntityType_Count,
 };
@@ -22,30 +21,6 @@ struct EntityHandle
 
     EntityType type
 };
-
-/*struct FreeList - Thought I'd need to make something like this but not really.
-{
-    int freeList[50];
-    int count = 0;
-};
-
-FreeList AddToList()
-{
-    int freeListCount = count;
-
-    if (freeListCount > 0)
-    {
-        nextFreeIndex = freeList[freeListCount - 1];
-        freeListCount--;
-    }
-    count++;
-}
-
-FreeList RemoveFromList()
-{
-
-}
-*/
 
 struct Entity
 {
@@ -72,6 +47,7 @@ struct Bullet
 {
     Entity entity;
     int8 speed;
+    real32 lifeTime;
 };
 
 struct EntityTypeBuffer
@@ -110,12 +86,6 @@ void EntityManagerInit(EntityManager* em)
     playerBuffer->capacity = 4;
     playerBuffer->count = 0;
     playerBuffer->entities = malloc(playerBuffer->entitySizeInBytes * playerBuffer->capacity);
-
-    EntityTypeBuffer* bulletBuffer = &em->buffers[EntityType_Bullet]; //BULLET BUFFER
-    bulletBuffer->entitySizeInBytes = sizeof(Bullet);
-    bulletBuffer->capacity = 50;
-    bulletBuffer->count = 0;
-    bulletBuffer->entities = malloc(bulletBuffer->entitySizeInBytes * bulletBuffer->capacity);
 
     EntityTypeBuffer* enemyBuffer = &em->buffers[EntityType_Enemy]; //ENEMY BUFFER
     enemyBuffer->entitySizeInBytes = sizeof(Enemy);
@@ -198,7 +168,13 @@ struct GameData {
     Sprite playerSprite;
     Sprite enemySprite;
     Sprite bulletSprite;
+
+    Bullet bullets[50];
+    uint8 bulletCount;
+    uint8 nextBulletIndex;
 };
+
+
 
 
 GameData *Data = NULL;
@@ -246,6 +222,8 @@ void MyInit() {
     Player* p = (Player*)GetEntity(&Data->entityManager, playerHandle);
     p->entity.position = V2();
     p->lives = 3;
+
+
 }
 
 
