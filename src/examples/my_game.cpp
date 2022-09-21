@@ -1,4 +1,3 @@
-
 enum EntityType
 {
     EntityType_Base,
@@ -6,6 +5,30 @@ enum EntityType
     EntityType_Enemy,
     EntityType_Count,
 };
+
+struct BulletList
+{
+    int bulletListCount;
+    int count;
+    Bullet bullets[bulletListCount];
+};
+
+BulletList AddToList()
+{
+    int nextFreeIndex = count;
+    if (bulletListCount > 0)
+    {
+        nextFreeIndex = bullets[bulletListCount - 1];
+        bulletListCount--;
+    }
+    count++;
+}
+
+BulletList RemoveFromList(int indexToRemove)
+{
+    freeList[freeListCount] = indexToRemove;
+    freeListCount++;
+}
 
 struct EntityInfo
 {
@@ -27,6 +50,8 @@ struct Entity
     //All data that is shared by entities.
     vec2 position;
     vec2 lastPosition;
+
+    bool markedForDeletion;
 };
 
 struct Player
@@ -102,7 +127,7 @@ EntityHandle AddEntity(EntityManager *em, EntityType type)
     EntityInfo* info = em->entities[em->nextID];
     info->type = type;
 
-    EntityTypeBuffer* buffer = *em->buffers[type];
+    EntityTypeBuffer* buffer = &em->buffers[type];
     info->indexInBuffer = buffer->count;
 
     buffer->count++;
@@ -121,7 +146,7 @@ EntityInfo* GetEntityInfo(EntityManager* em, EntityHandle h)
         return NULL;
     } 
 
-    EntityInfo* info = &em->entities[h.id]; //Create EntityInfo pointer equal to passed in EntityHandle's ID.
+    EntityInfo* info = &em->entities[h.id]; //Create EntityInfo pointer equal to the passed-in EntityHandle's ID.
 
     if (info->generation != h.generation) //If the info generation is not the same, return null
     {
@@ -157,8 +182,21 @@ void* DeleteEntity(EntityManager* em, EntityHandle h)
     {
         return NULL;
     }
+    
+    EntityTypeBuffer* buffer = &em->buffers[h.type];
+
+    //get buffer count and subtract by 1
+    //up the generation
+    
+    
+    [info.id]
+    info->indexInBuffer - 1;
+
 
     //Get index in buffer, increase generation?? and do pointer arithmetic on EntityInfo to set the count == index removed then count up?
+    buffer->count++;
+
+    return h;
 }
 
 struct GameData {
@@ -169,13 +207,8 @@ struct GameData {
     Sprite enemySprite;
     Sprite bulletSprite;
 
-    Bullet bullets[50];
-    uint8 bulletCount;
-    uint8 nextBulletIndex;
+    BulletList bulletList;
 };
-
-
-
 
 GameData *Data = NULL;
 
@@ -192,9 +225,9 @@ void LoadGameSprites()
 void UpdatePositions()
 {
     //Loop over enemies, make them move down the screen. If at edge of bounds then flip direction and move down 1.
-    for (int i = 0; i < &Data->entityManager.count; i++)
+    for (int i = 0; i < &Data->entityManager->enemyBuffer->count; i++)
     {
-        Enemy* e = (Enemy*)GetEntity(&Data->entityManager, enemyHandle);
+        Enemy* e = (Enemy*)GetEntity(&Data->entityManager->enemyBuffer, enemyHandle);
         e->entity.position = e->entity.lastPosition + V2(0, 0);
         e->entity.lastPosition = e->entity.position;
     }
