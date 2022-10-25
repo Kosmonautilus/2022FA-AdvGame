@@ -18,7 +18,6 @@ struct EntityHandle
 {
     int32 id;
     int32 generation;
-
     EntityType type;
 };
 
@@ -28,7 +27,6 @@ struct Entity
     vec2 lastPosition;
     vec2 scale;
     vec2 rotation;
-
 };
 
 struct Player
@@ -61,7 +59,6 @@ struct EntityTypeBuffer
 
 struct EntityManager
 {
-    int32 entityCount;
     int32 entityCapacity;
     int32 nextID;
     EntityInfo* entities;
@@ -69,14 +66,27 @@ struct EntityManager
     EntityTypeBuffer buffers[EntityType_Count];
 };
 
+int32 entityFreeList[1000];
+int32 entityFreeListCount = 0;
+int32 nextFreeListIndex = 0;
+
+
 void EntityManagerInit(EntityManager* em)
 {
-    em->entityCount = 0;
     em->entityCapacity = 1000;
     em->entities = (EntityInfo*)malloc(sizeof(EntityInfo) * em->entityCapacity);
     memset(em->entities, 0, sizeof(EntityInfo) * em->entityCapacity);
 
     em->nextID = 0;
+
+    /*for (int i = 0; i < EntityType_Count; i++)  //Can I create an extensible amount of buffers?
+    {
+        EntityTypeBuffer* buffer = &em->buffers[i];
+        buffer->entitySizeInBytes = sizeof();
+        buffer->capacity = 512;
+        buffer->count = 0;
+        buffer->entities = malloc(buffer->entitySizeInBytes * buffer->capacity);
+    }*/
 
     EntityTypeBuffer* playerBuffer = &em->buffers[EntityType_Player]; //PLAYER BUFFER || NOTE: Do we need this? There will only ever be ONE player.
     playerBuffer->entitySizeInBytes = sizeof(Player);
@@ -89,7 +99,6 @@ void EntityManagerInit(EntityManager* em)
     enemyBuffer->capacity = 20;
     enemyBuffer->count = 0;
     enemyBuffer->entities = malloc(enemyBuffer->entitySizeInBytes * enemyBuffer->capacity);
-
 }
 
 EntityInfo* GetEntityInfo(EntityManager* em, EntityHandle h)
@@ -128,30 +137,36 @@ void* GetEntity(EntityManager* em, EntityHandle h)
 
 }
 
-EntityHandle AddEntity(EntityManager* em, EntityType type) //We need to increment the generation based on the index and incorporate a free lsit
+EntityHandle AddEntity(EntityManager* em, EntityType type) //We need to increment the generation based on the index and incorporate a free list
 {
-    EntityHandle h = {};
+    /*nextFreeListIndex = buffer->count;
+
+    if (entityFreeListCount > 0)
+    {
+        nextFreeListIndex = entityFreeList[entityFreeListCount - 1];
+        entityFreeListCount--;
+    }*/
 
     EntityInfo* info = &em->entities[em->nextID];
     info->type = type;
+    info->generation++;
+
 
     EntityTypeBuffer* buffer = &em->buffers[type];
     info->indexInBuffer = buffer->count;
     buffer->count++;
-    em->entityCount++;
 
-
-    h.id = em->nextID;
+    EntityHandle h = {};
     h.generation = info->generation;
-
-    em->nextID++;
+    h.id = em->nextID;
+    h.type = type;
 
     return h;
 };
 
 void DeleteEntities(EntityManager* em) //Adjust for freelist, this uses basic removal by swap.
 {
-    for (int i = 0; i < em->entityCount; i++)
+    for (int i = 0; i < entityFreeListCount; i++)
     {
         EntityInfo* info = &em->entities[i];
         if (info->markedForDeletion == true)
@@ -159,8 +174,9 @@ void DeleteEntities(EntityManager* em) //Adjust for freelist, this uses basic re
             EntityTypeBuffer* buffer = &em->buffers[info->type];
             
             memcpy((u8*)buffer->entities + sizeof(buffer->entitySizeInBytes) * (info->indexInBuffer), 
-                (u8*)buffer->entities + sizeof(buffer->entitySizeInBytes) * (buffer->count - 1),
-                                       sizeof(buffer->entitySizeInBytes));
+                   (u8*)buffer->entities + sizeof(buffer->entitySizeInBytes) * (buffer->count - 1),
+                                           sizeof(buffer->entitySizeInBytes));
+
             buffer->count--;
             em->entityCount--;
             info->generation++; //NOTE: Do we put generation increment here ?
@@ -175,8 +191,6 @@ void* MarkForDeletion(EntityManager* em, EntityHandle h)
     {
         return NULL;
     }
-    EntityTypeBuffer* buffer = &em->buffers[info->type];
-
     info->markedForDeletion = true;
 
     return info;
