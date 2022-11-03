@@ -1,3 +1,5 @@
+#include "assignment1/entitymanager.cpp"
+
 //Create level tile map of 32 x 16 
 //If player moves past coordinate boundary then they are transported to the next level in that direction.
 //Correlates to a 2D vector of levels (8x8? Probably want to be extensible.)
@@ -8,8 +10,6 @@
 struct Level
 {
 	vec2 levelDimensions; //THIS SHOULD BE 32 x 16
-	void* entities;
-
 
 };
 

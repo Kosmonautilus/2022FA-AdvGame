@@ -27,6 +27,8 @@ struct Entity
     vec2 lastPosition;
     vec2 scale;
     vec2 rotation;
+
+    EntityHandle handle;
 };
 
 struct Player
@@ -68,7 +70,9 @@ struct EntityManager
 
 int32 entityFreeList[1000];
 int32 entityFreeListCount = 0;
-int32 nextFreeListIndex = 0;
+
+int32 entitiesToDelete[1000];
+int32 entityDeleteCount = 0;
 
 
 void EntityManagerInit(EntityManager* em)
@@ -139,49 +143,69 @@ void* GetEntity(EntityManager* em, EntityHandle h)
 
 EntityHandle AddEntity(EntityManager* em, EntityType type) //We need to increment the generation based on the index and incorporate a free list
 {
-    /*nextFreeListIndex = buffer->count;
-
+    int32 ID = &em->nextID;
     if (entityFreeListCount > 0)
     {
-        nextFreeListIndex = entityFreeList[entityFreeListCount - 1];
+        ID = entityFreeList[entityFreeListCount];
         entityFreeListCount--;
-    }*/
+    }
+    else
+    {
+       ID = &em->nextID++;
+    }
 
-    EntityInfo* info = &em->entities[em->nextID];
+    EntityInfo* info = &em->entities[ID];
     info->type = type;
-    info->generation++;
+
+    if (info->generation == 0)
+    {
+        info->generation++;
+    }
+
 
 
     EntityTypeBuffer* buffer = &em->buffers[type];
     info->indexInBuffer = buffer->count;
     buffer->count++;
 
+    Entity* e = (Entity*)&buffer[indexInBuffer];
+
     EntityHandle h = {};
     h.generation = info->generation;
-    h.id = em->nextID;
+    h.id = ID;
     h.type = type;
+
+    e->handle = h;
 
     return h;
 };
 
 void DeleteEntities(EntityManager* em) //Adjust for freelist, this uses basic removal by swap.
 {
-    for (int i = 0; i < entityFreeListCount; i++)
+    for (int i = 0; i < entityDeleteCount; i++)
     {
-        EntityInfo* info = &em->entities[i];
+        EntityInfo* info = &em->entities[entitiesToDelete[i]];
         if (info->markedForDeletion == true)
         {
             EntityTypeBuffer* buffer = &em->buffers[info->type];
+            
+            entityFreeList[entityFreeListCount] = info->indexInBuffer;
+            entityFreeListCount++;
             
             memcpy((u8*)buffer->entities + sizeof(buffer->entitySizeInBytes) * (info->indexInBuffer), 
                    (u8*)buffer->entities + sizeof(buffer->entitySizeInBytes) * (buffer->count - 1),
                                            sizeof(buffer->entitySizeInBytes));
 
+            Entity* e = (Entity*)&buffer[buffer->count - 1];
+            EntityInfo* swappedInfo = &em->entities[e->handle.id];
+            swappedInfo->indexInBuffer = info->indexInBuffer;
+
             buffer->count--;
-            em->entityCount--;
             info->generation++; //NOTE: Do we put generation increment here ?
+
         }
     }
+    entityDeleteCount = 0;
 }
 
 void* MarkForDeletion(EntityManager* em, EntityHandle h)
@@ -192,6 +216,9 @@ void* MarkForDeletion(EntityManager* em, EntityHandle h)
         return NULL;
     }
     info->markedForDeletion = true;
+
+    entitiesToDelete[entityDeleteCount] = h.id;
+    entityDeleteCount++;
 
     return info;
 }
