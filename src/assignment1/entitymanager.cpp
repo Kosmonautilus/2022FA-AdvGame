@@ -1,8 +1,14 @@
 enum EntityType
 {
+    EntityType_Wall,
+    EntityType_Water,
+    EntityType_Tree,
     EntityType_Player,
-    EntityType_Enemy,
-    EntityType_Count,
+    EntityType_Footman,
+    EntityType_Crossbowman,
+    EntityType_Knight,
+    EntityType_Wizard,
+    EntityType_Count
 };
 
 struct EntityInfo
@@ -25,30 +31,9 @@ struct Entity
 {
     vec2 position;
     vec2 lastPosition;
-    vec2 scale;
-    vec2 rotation;
+    vec2 direction;
 
     EntityHandle handle;
-};
-
-struct Player
-{
-    Entity entity;
-    uint8 lives;
-    vec4 color;
-};
-
-struct Enemy
-{
-    Entity entity;
-    int8 direction;
-};
-
-struct Bullet
-{
-    Entity entity;
-    int8 speed;
-    real32 lifeTime;
 };
 
 struct EntityTypeBuffer
@@ -57,6 +42,28 @@ struct EntityTypeBuffer
     int32 entitySizeInBytes;
     int32 capacity;
     void* entities;
+};
+
+struct Footman : Entity
+{
+    int8 health;
+};
+
+struct Crossbowman : Entity
+{
+    int8 health;
+    uint8 ammo;
+};
+
+struct Knight : Entity
+{
+    int8 health;
+};
+
+struct Wizard : Entity
+{
+    int8 health;
+    uint8 teleportTimer;
 };
 
 struct EntityManager
@@ -82,27 +89,29 @@ void EntityManagerInit(EntityManager* em)
     memset(em->entities, 0, sizeof(EntityInfo) * em->entityCapacity);
 
     em->nextID = 0;
+}
 
-    /*for (int i = 0; i < EntityType_Count; i++)  //Can I create an extensible amount of buffers?
+void InitializeEntityBuffer(EntityManager* em, EntityType bufferType, int32 entityCap, size_t sizeInBytes)
+{
+    EntityTypeBuffer* buffer = &em->buffers[bufferType];
+
+    buffer->entitySizeInBytes = sizeInBytes;
+    buffer->capacity = entityCap;
+    buffer->count = 0;
+    buffer->entities = malloc(buffer->entitySizeInBytes * buffer->capacity);
+}
+
+void ClearEntityBuffer(EntityTypeBuffer* buffer)
+{
+    buffer->count = 0;
+}
+
+void ClearAllBuffers(EntityManager* em)
+{
+    for (int i = 0; i < EntityType_Count; i++)
     {
-        EntityTypeBuffer* buffer = &em->buffers[i];
-        buffer->entitySizeInBytes = sizeof();
-        buffer->capacity = 512;
-        buffer->count = 0;
-        buffer->entities = malloc(buffer->entitySizeInBytes * buffer->capacity);
-    }*/
-
-    EntityTypeBuffer* playerBuffer = &em->buffers[EntityType_Player]; //PLAYER BUFFER || NOTE: Do we need this? There will only ever be ONE player.
-    playerBuffer->entitySizeInBytes = sizeof(Player);
-    playerBuffer->capacity = 4;
-    playerBuffer->count = 0;
-    playerBuffer->entities = malloc(playerBuffer->entitySizeInBytes * playerBuffer->capacity);
-
-    EntityTypeBuffer* enemyBuffer = &em->buffers[EntityType_Enemy]; //ENEMY BUFFER
-    enemyBuffer->entitySizeInBytes = sizeof(Enemy);
-    enemyBuffer->capacity = 20;
-    enemyBuffer->count = 0;
-    enemyBuffer->entities = malloc(enemyBuffer->entitySizeInBytes * enemyBuffer->capacity);
+        em->buffers[i].count = 0;
+    }
 }
 
 EntityInfo* GetEntityInfo(EntityManager* em, EntityHandle h)
@@ -143,7 +152,7 @@ void* GetEntity(EntityManager* em, EntityHandle h)
 
 EntityHandle AddEntity(EntityManager* em, EntityType type) //We need to increment the generation based on the index and incorporate a free list
 {
-    int32 ID = &em->nextID;
+    int32 ID = em->nextID;
     if (entityFreeListCount > 0)
     {
         ID = entityFreeList[entityFreeListCount];
@@ -151,7 +160,7 @@ EntityHandle AddEntity(EntityManager* em, EntityType type) //We need to incremen
     }
     else
     {
-       ID = &em->nextID++;
+       ID = em->nextID++;
     }
 
     EntityInfo* info = &em->entities[ID];
@@ -163,12 +172,11 @@ EntityHandle AddEntity(EntityManager* em, EntityType type) //We need to incremen
     }
 
 
-
     EntityTypeBuffer* buffer = &em->buffers[type];
     info->indexInBuffer = buffer->count;
     buffer->count++;
 
-    Entity* e = (Entity*)&buffer[indexInBuffer];
+    Entity* e = (Entity*)&buffer[info->indexInBuffer];
 
     EntityHandle h = {};
     h.generation = info->generation;

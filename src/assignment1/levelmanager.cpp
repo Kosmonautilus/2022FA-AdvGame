@@ -1,4 +1,5 @@
 #include "assignment1/entitymanager.cpp"
+#include "assignment1/filereadwrite.cpp"
 
 //Create level tile map of 32 x 16 
 //If player moves past coordinate boundary then they are transported to the next level in that direction.
@@ -7,29 +8,18 @@
 //How do we save our levels? Do we want to read from a file or set it at runtime?
 //Can we map entities based on their position rather than their index?
 
-struct Level
-{
-	vec2 levelDimensions; //THIS SHOULD BE 32 x 16
 
-};
+//We want player position to transfer over to the new level (to stop from getting stuck in walls!)
+/*      L1               L2
+		#########        #########
+		#       #        ##   ####
+		#     ->@      ->@  X   ##
+		#       #        #    ####
+		#########        #########
+	
+*/
 
-
-void PlaceEntity(vec2 cursorPosition, EntityType type)
-{
-
-}
-
-void RemoveEntity(vec2 cursorPosition)
-{
-
-}
-
-void LoadLevel()
-{
-
-}
-
-void SaveLevel()
+void LevelTransition(vec2 ToLevelPosition, vec2 playerPosition)
 {
 
 }

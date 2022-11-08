@@ -1,4 +1,5 @@
 #include "assignment1/entitymanager.cpp"
+#include "assignment1/filereadwrite.cpp"
 
 struct GameData {
     EntityManager* entityManager;
@@ -10,7 +11,6 @@ struct GameData {
 };
 
 GameData *Data = NULL;
-EntityManager* EManager = NULL;
 
 
 void LoadGameSprites()
@@ -22,8 +22,9 @@ void LoadGameSprites()
     LoadSprite(&Data->bulletSprite, "");
 }
 
-void PlayerInput(Player* p)
+void PlayerInput()
 {
+    /*
     vec2 P_Direction = V2(0, 0);
 
     if (InputHeld(Input, Input_Up))
@@ -42,7 +43,7 @@ void PlayerInput(Player* p)
     {
         P_Direction.x = 1;
     }
-
+    */
 }
 
 void MoveEntities()
@@ -66,10 +67,6 @@ void MyInit() {
     memset(Game->myData, 0, sizeof(GameData));
 
     Data = (GameData *)Game->myData;
-
-    EManager = (EntityManager*)Data->entityManager;
-
-    EntityManagerInit(EManager);
 
     //Load sprites
     LoadGameSprites();

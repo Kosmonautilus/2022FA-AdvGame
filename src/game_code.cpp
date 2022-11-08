@@ -1,9 +1,10 @@
 
 #define MOSAIC 0
+#define LEVEL_EDITOR 0
 #define MY_GAME 1
 
-#define NETWORK_SIMPLE 1
-#define MESSAGING 1
+#define NETWORK_SIMPLE 0
+#define MESSAGING 0
 #define PONG_BAD 0
 #define PARTICLES 0
 #define TYPING 0
@@ -17,16 +18,18 @@
 
 #define PARSING 0
 
-#define DX12_TEST 1
-#define RAYTRACER 1
+#define DX12_TEST 0
+#define RAYTRACER 0
 
 #define PARSING 0
 
-#define BABY 1
+#define BABY 0
 
 #if MOSAIC
 #include "mosaic.cpp"
 
+#elif LEVEL_EDITOR
+#include "assignment1/leveleditor.cpp"
 #elif MY_GAME
 #include "examples/my_game.cpp"
 
