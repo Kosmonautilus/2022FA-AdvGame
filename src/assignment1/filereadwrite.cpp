@@ -4,7 +4,8 @@ enum LevelTokenType
 	LevelTokenType_RightParen,
 	LevelTokenType_Integer,
 	LevelTokenType_Pound,
-	LevelTokenType_Identifier
+	LevelTokenType_Identifier,
+	LevelTokenType_Dollar
 };
 
 struct Token
@@ -37,11 +38,13 @@ bool IsNumber(char c)
 	return isNumber;
 }
 
-void ReadLevel(char* filePath)
+void ReadLevel(EntityManager* em, char* filePath)
 {
 	DynamicArray<Token> tokens = MakeDynamicArray<Token>(&Game->frameMem, 100);
 	MemoryArena arena = {};
 	//AllocateMemoryArena(&arena, Megabytes(8));
+
+	char intArray[6];
 
 	FileHandle file = {};
 
@@ -96,63 +99,150 @@ void ReadLevel(char* filePath)
 	while (tokenIndex < tokens.count)
 	{
 		Token t = tokens[tokenIndex];
-
 		if (t.type == LevelTokenType_Pound)
 		{
-
-		}
-		
-		if (strncmp("footmen", t.start, t.length) == 0)
-		{
-			EntityTypeBuffer* buffer = &em->buffers[EntityType_Footman];
-			tokenIndex++;
-			if (t.type == LevelTokenType_LeftParen)
+			if (strncmp("footmen", t.start, t.length) == 0)
 			{
-				EntityHandle* footmanHandle = AddEntity(&em, EntityType_Footman);
-				EntityInfo* info = &em->entities[footmanHandle->id];
-				Footman* f = (Footman*)&buffer[info->indexInBuffer];
-				tokenIndex++;
-				for (int i = 0; i < 4; i++)
+				while (true)
 				{
-					if (t.type == LevelTokenType_Integer)
+					EntityTypeBuffer* buffer = &em->buffers[EntityType_Footman];
+					tokenIndex++;
+					if (t.type == LevelTokenType_LeftParen)
 					{
-						switch (i)
+						EntityHandle footmanHandle = AddEntity(em, EntityType_Footman);
+						EntityInfo* info = &em->entities[footmanHandle.id];
+						Footman* f = (Footman*)&buffer[info->indexInBuffer];
+						tokenIndex++;
+
+						for (int i = 0; i < 2; i++) //set position
 						{
-							case 0;
-								f->position.x = ;
-								break;
-							case 1:
-								f->position.y = ;
-								break;
-							case 2:
-								f->direction.x = ;
-								break;
-							case 3:
-								f->direction.y = ;
-								break;
+							if (t.type == LevelTokenType_Integer)
+							{
+								memcpy(intArray, t.start, t.length);
+								switch (i)
+								{
+								case 0:
+									f->position.x = atoi(intArray);
+									break;
+								case 1:
+									f->position.y = atoi(intArray);
+									break;
+								}
+								tokenIndex++;
+							}
 						}
+
+						for (int i = 0; i < 2; i++) //set direction
+						{
+							if (t.type == LevelTokenType_Integer)
+							{
+								memcpy(intArray, t.start, t.length);
+								switch (i)
+								{
+								case 0:
+									f->direction.x = atoi(intArray);
+									break;
+								case 1:
+									f->direction.y = atoi(intArray);
+									break;
+								}
+								tokenIndex++;
+							}
+						}
+					}
+					if (t.type == LevelTokenType_RightParen)
+					{
 						tokenIndex++;
 					}
+					if (t.type == LevelTokenType_Dollar)
+					{
+						break;
+					}
 				}
-
 			}
-			if (t.type == LevelTokenType_RightParen)
+			if (strncmp("crossbowmen", t.start, t.length) == 0)
 			{
-				tokenIndex++;
+				while (true)
+				{
+					if (t.type == LevelTokenType_LeftParen)
+					{
+						for (int i = 0; i < 2; i++)
+						{
+
+						}
+
+						for (int i = 0; i < 2; i++)
+						{
+
+						}
+					}
+
+					if (t.type == LevelTokenType_RightParen)
+					{
+
+					}
+					if (t.type == LevelTokenType_Dollar)
+					{
+
+					}
+				}
+			}
+			if (strncmp("knights", t.start, t.length) == 0)
+			{
+				while (true)
+				{
+					if (t.type == LevelTokenType_LeftParen)
+					{
+						for (int i = 0; i < 2; i++)
+						{
+
+						}
+
+						for (int i = 0; i < 2; i++)
+						{
+
+						}
+					}
+
+					if (t.type == LevelTokenType_RightParen)
+					{
+
+					}
+					if (t.type == LevelTokenType_Dollar)
+					{
+
+					}
+				}
+			}
+			if (strncmp("wizards", t.start, t.length) == 0)
+			{
+				while (true)
+				{
+					if (t.type == LevelTokenType_LeftParen)
+					{
+						for (int i = 0; i < 2; i++)
+						{
+
+						}
+
+						for (int i = 0; i < 2; i++)
+						{
+
+						}
+					}
+
+					if (t.type == LevelTokenType_RightParen)
+					{
+
+					}
+					if (t.type == LevelTokenType_Dollar)
+					{
+
+					}
+				}
 			}
 		}
-		if (strncmp("crossbowmen", t.start, t.length) == 0)
-		{
-
-		}
-		if (strncmp("knights", t.start, t.length) == 0)
-		{
-
-		}
-		if (strncmp("wizards", t.start, t.length) == 0)
-		{
-
-		}
+		
 		tokenIndex++;
 	}
 
