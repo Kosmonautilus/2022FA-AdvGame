@@ -17,6 +17,13 @@
 		#       #        #    ####
 		#########        #########
 	
+	Get level transition direction
+	player should be on opposite side of transition direction axis
+
+	ex: moving left to right = player exits on right, starts on left
+		moving down to up = player exits top, starts bottom
+
+
 */
 
 void LevelTransition(vec2 ToLevelPosition, vec2 playerPosition)

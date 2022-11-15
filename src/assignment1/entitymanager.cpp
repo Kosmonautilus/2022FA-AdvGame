@@ -3,11 +3,16 @@ enum EntityType
     EntityType_Wall,
     EntityType_Water,
     EntityType_Tree,
+    EntityType_Rock,
     EntityType_Player,
     EntityType_Footman,
     EntityType_Crossbowman,
     EntityType_Knight,
     EntityType_Wizard,
+    EntityType_Chicken,
+    EntityType_Potion,
+    EntityType_Coin,
+    EntityType_Bomb,
     EntityType_Count
 };
 

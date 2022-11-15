@@ -337,6 +337,16 @@ void DrawSprite(vec2 position, vec2 scale, Sprite *texture) {
     DrawSprite(position, scale, 0.0f, texture);
 }
 
+void DrawSpritePixel(vec2i position, vec2 scale, Sprite* texture)
+{
+    vec2 pos_ = V2((position.x - (Game->screenWidth / 2.0f)) / 100.0f,
+                   (position.y - (Game->screenHeight / 2.0f)) / 100.0f);
+
+    vec2 scale_ = V2(scale.x * 0.02f,scale.y * 0.02f);
+
+    DrawSprite(pos_, scale_, 0.0f, texture);
+}
+
 
 void DrawRect(vec2 pos, vec2 scale, real32 angle, vec4 color) {
     // @PERF: don't do this every draw call
