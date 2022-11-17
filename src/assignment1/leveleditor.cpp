@@ -253,6 +253,8 @@ void DrawUI()
 	//SCALE IS IN 50(PIXEL?)
 	//DrawSprite(V2(-6.5f,0), V2(1.5, 4.5), &editorData->UI_Background);
 
+	DrawSpritePixel(V2i(150, 450), V2i(75, 225), &editorData->UI_Background);
+
 	DrawSprite(V2(-6.5f, -4.08f), V2(0.74, 0.3),    &editorData->UI_PlayButton.buttonSprite);
 	DrawSprite(V2(-6.84f, -3.3f), V2(0.24, 0.24),   &editorData->UI_SaveButton.buttonSprite);
 	DrawSprite(V2(-6.16f, -3.3f), V2(0.24, 0.24),   &editorData->UI_LoadButton.buttonSprite);
@@ -274,18 +276,20 @@ void DrawUI()
 
 	DrawSprite(V2(-6.52f, 3.11f), V2(0.54f, 0.1f),  &editorData->UI_EntityCategory[currentEntityCategory]);
 
-	DrawSpritePixel(V2i(150, 450), V2(75, 225), &editorData->UI_Background);
-
-	switch (currentEntityCategory)
+	switch (currentEntityCategory) //replace with active portrait system
 	{
 	case EntityCategory_Terrain:
 		break;
 	case EntityCategory_Normans:
-		DrawSprite(V2(-7.06f, 2.32f), V2(0.46f, 0.46f), &editorData->UI_Portraits[7].activeSprite);
+		DrawSpritePixel(V2i(206, 682), V2i(23, 23), &editorData->UI_Portraits[5].activeSprite);
+		DrawSpritePixel(V2i(94, 566), V2i(23, 23), &editorData->UI_Portraits[6].activeSprite);
 		break;
 	case EntityCategory_Items:
 		break;
 	};
+
+	//94 left, 206 right
+	//682 top, 
 
 	/*
 	for (int i = 0; i < 4; i++)
@@ -316,8 +320,8 @@ void MyInit()
 
 	editorData = (MyData*)Game->myData;
 
-	currentLevel.x = 8;
-	currentLevel.y = 4;
+	currentLevel.x = 2;
+	currentLevel.y = 5;
 	currentEntityCategory = EntityCategory_Normans;
 
 	gameMode = GameMode_Edit;

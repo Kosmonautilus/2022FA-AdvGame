@@ -337,7 +337,7 @@ void DrawSprite(vec2 position, vec2 scale, Sprite *texture) {
     DrawSprite(position, scale, 0.0f, texture);
 }
 
-void DrawSpritePixel(vec2i position, vec2 scale, Sprite* texture)
+void DrawSpritePixel(vec2i position, vec2i scale, Sprite* texture)
 {
     vec2 pos_ = V2((position.x - (Game->screenWidth / 2.0f)) / 100.0f,
                    (position.y - (Game->screenHeight / 2.0f)) / 100.0f);
