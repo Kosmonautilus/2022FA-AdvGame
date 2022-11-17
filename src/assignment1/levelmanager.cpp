@@ -54,7 +54,7 @@ void DrawLevelGrid(LevelGrid* grid)
 			scale = V2(grid->gridSize.x * 0.5f + grid->lineThickness, grid->lineThickness);
 		}
 
-		DrawRect(rowLineCenter, scale, V4(1, 1, 1, 1));
+		DrawRect(rowLineCenter, scale, V4(1, 1, 1, 0.5f));
 	}
 
 	for (int x = 0; x < grid->gridWidth + 1; x++)
@@ -68,7 +68,7 @@ void DrawLevelGrid(LevelGrid* grid)
 			scale = V2(grid->lineThickness, grid->gridSize.y * 0.5f + grid->lineThickness);
 		}
 
-		DrawRect(colLineCenter, scale, V4(1, 1, 1, 1));
+		DrawRect(colLineCenter, scale, V4(1, 1, 1, 0.5f));
 	}
 }
 
@@ -77,9 +77,9 @@ void SetGridSize(LevelGrid* grid, uint32 newWidth, uint32 newHeight, vec2 gridOf
 	grid->gridWidth = Clamp(newWidth, 1, 255);
 	grid->gridHeight = Clamp(newHeight, 1, 255);
 
-	grid->tileSize = 0.5f;
+	grid->tileSize = 1;
 
-	grid->lineThickness = grid->tileSize * 0.04f;
+	grid->lineThickness = 0.01f;
 
 	grid->gridSize.x = grid->tileSize * grid->gridWidth;
 	grid->gridSize.y = grid->tileSize * grid->gridHeight;

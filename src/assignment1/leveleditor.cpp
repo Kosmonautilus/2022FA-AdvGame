@@ -11,9 +11,8 @@ enum DrawMode
 enum GameMode
 {
 	GameMode_Edit,
-	GameMode_Test,
+	GameMode_Test
 };
-
 enum EntityCategory
 {
 	EntityCategory_Terrain,
@@ -77,11 +76,12 @@ GameMode gameMode;
 vec2i mousePosition;
 
 bool onGrid;
-vec2 gridPosition;
+vec2i gridPosition;
 
 EntityType selectedEntityType;
 vec2 currentLevel;
 EntityCategory currentEntityCategory;
+
 
 EntityHandle selectedEntities[1000];
 int32 selectedEntitiesCount;
@@ -125,12 +125,20 @@ void InitializeUI()
   //LoadSprite(&editorData->UI_Portraits[1].activeSprite,  "data/ui/UI_Portrait_Water.png");
   //LoadSprite(&editorData->UI_Portraits[2].activeSprite,  "data/ui/UI_Portrait_Tree.png");
   //LoadSprite(&editorData->UI_Portraits[3].activeSprite,  "data/ui/UI_Portrait_Rock.png");
-  // 
-  //LoadSprite(&editorData->UI_Portraits[4].activeSprite,  "data/ui/UI_Portrait_Footman.png");
+  
+  //Initialize Normans
+    LoadSprite(&editorData->UI_Portraits[4].activeSprite,  "data/ui/UI_Portrait_Footman.png");
+	editorData->UI_Portraits[4].portraitEntity = EntityType_Footman;
+
 	LoadSprite(&editorData->UI_Portraits[5].activeSprite,  "data/ui/UI_Portrait_Crossbowman.png");
+	editorData->UI_Portraits[5].portraitEntity = EntityType_Crossbowman;
+
 	LoadSprite(&editorData->UI_Portraits[6].activeSprite,  "data/ui/UI_Portrait_Knight.png");
+	editorData->UI_Portraits[6].portraitEntity = EntityType_Knight;
+
   //LoadSprite(&editorData->UI_Portraits[7].activeSprite,  "data/ui/UI_Portrait_Wizard.png");
-  // 
+  //editorData->UI_Portraits[7].portraitEntity = EntityType_Wizard; 
+  
   //LoadSprite(&editorData->UI_Portraits[8].activeSprite,  "data/ui/UI_Portrait_Chicken.png");
   //LoadSprite(&editorData->UI_Portraits[9].activeSprite,  "data/ui/UI_Portrait_Potion.png");
   //LoadSprite(&editorData->UI_Portraits[10].activeSprite, "data/ui/UI_Portrait_Coin.png");
@@ -180,51 +188,6 @@ void NewLevel()
 
 }
 
-void ClickPositionCheck()
-{
-	if (!onGrid) //There is a better way to do this but it would require restructuring how buttons work. Could have made an array of buttons and looped through.
-	{
-		//category incrementer
-		if (mousePosition.x >= 48 && mousePosition.x <= 68 && mousePosition.y >= 748 && mousePosition.y <= 776)
-		{
-			editorData->UI_LeftButton.isActive = true;
-			//move an index back on editor category
-		}
-		if (mousePosition.x >= 232 && mousePosition.x <= 252 && mousePosition.y >= 748 && mousePosition.y <= 776)
-		{
-			editorData->UI_RightButton.isActive = true;
-			//move an index forward on editor category
-		}
-
-
-	}
-	/*
-	if (mousePosition.x >= && mousePosition.x <= && mousePosition.y >= && mousePosition.y <= )
-	{
-
-	}
-	*/
-}
-
-void InputLogic()
-{
-	//Get mouse position
-	mousePosition = Input->mousePos;
-	if (mousePosition.x <= 300.0f && gameMode == GameMode_Edit)
-	{
-		onGrid = false;
-	}
-	else
-	{
-		onGrid = true;
-	}
-
-	if (InputPressed(Mouse, Input_MouseLeft) || (InputReleased(Mouse, Input_MouseLeft)))
-	{
-		ClickPositionCheck();
-	}
-}
-
 void UpdateCategory()
 {
 	if (currentEntityCategory == EntityCategory_Terrain)
@@ -247,6 +210,104 @@ void UpdateCategory()
 		editorData->UI_ActivePortraits[1] = editorData->UI_Portraits[9];
 		editorData->UI_ActivePortraits[2] = editorData->UI_Portraits[10];
 		editorData->UI_ActivePortraits[3] = editorData->UI_Portraits[11];
+	}
+}
+
+void ClickPositionCheck()
+{
+	if (!onGrid) //There is a better way to do this but it would require restructuring how buttons work. Could have made an array of buttons and looped through.
+	{
+		//category incrementer
+		if (mousePosition.x >= 48 && mousePosition.x <= 68 && mousePosition.y >= 748 && mousePosition.y <= 776)
+		{
+			editorData->UI_LeftButton.isActive = true;
+
+			if (currentEntityCategory > 0)
+			{
+				currentEntityCategory = (EntityCategory)(currentEntityCategory - 1);
+				UpdateCategory();
+			}
+			else
+			{
+				currentEntityCategory = (EntityCategory)(EntityCategory_Count - 1);
+				UpdateCategory();
+			}
+			//move an index back on editor category
+		}
+		if (mousePosition.x >= 232 && mousePosition.x <= 252 && mousePosition.y >= 748 && mousePosition.y <= 776)
+		{
+			if (currentEntityCategory < EntityCategory_Count - 1)
+			{
+				currentEntityCategory = (EntityCategory)(currentEntityCategory + 1);
+				UpdateCategory();
+			}
+			else
+			{
+				currentEntityCategory = (EntityCategory)0;
+				UpdateCategory();
+			}
+
+			editorData->UI_RightButton.isActive = true;
+			//move an index forward on editor category
+		}
+
+		if (mousePosition.x >= 94 && mousePosition.x <= 94 && mousePosition.y >= 682 && mousePosition.y <= 682) 
+		{
+			editorData->UI_ActivePortraits[0].isActive = true;
+			editorData->UI_ActivePortraits[1].isActive = false;
+			editorData->UI_ActivePortraits[2].isActive = false;
+			editorData->UI_ActivePortraits[3].isActive = false;
+			//top left portrait
+		}
+		if (mousePosition.x >= 94 && mousePosition.x <= 94 && mousePosition.y >= 682 && mousePosition.y <= 682)
+		{
+			editorData->UI_ActivePortraits[0].isActive = false;
+			editorData->UI_ActivePortraits[1].isActive = true;
+			editorData->UI_ActivePortraits[2].isActive = false;
+			editorData->UI_ActivePortraits[3].isActive = false;
+			//top right portrait
+		}
+		if (mousePosition.x >= 94 && mousePosition.x <= 94 && mousePosition.y >= 682 && mousePosition.y <= 682)
+		{
+			editorData->UI_ActivePortraits[0].isActive = false;
+			editorData->UI_ActivePortraits[1].isActive = false;
+			editorData->UI_ActivePortraits[2].isActive = true;
+			editorData->UI_ActivePortraits[3].isActive = false;
+			//bot left portrait
+		}
+		if (mousePosition.x >= 206 && mousePosition.x <= 94 && mousePosition.y >= 566 && mousePosition.y <= 682)
+		{
+			editorData->UI_ActivePortraits[0].isActive = false;
+			editorData->UI_ActivePortraits[1].isActive = false;
+			editorData->UI_ActivePortraits[2].isActive = false;
+			editorData->UI_ActivePortraits[3].isActive = true;
+			//bot right portrait
+		}
+	}
+	/*
+	if (mousePosition.x >= && mousePosition.x <= && mousePosition.y >= && mousePosition.y <= )
+	{
+
+	}
+	*/
+}
+
+void InputLogic()
+{
+	//Get mouse position
+	mousePosition = Input->mousePos;
+	if (mousePosition.x <= 300.0f && gameMode == GameMode_Edit)
+	{
+		onGrid = false;
+	}
+	else
+	{
+		onGrid = true;
+	}
+
+	if (InputPressed(Mouse, Input_MouseLeft))
+	{
+		ClickPositionCheck();
 	}
 }
 
@@ -277,29 +338,11 @@ void DrawUI()
 
 
 	DrawSprite(V2(-6.52f, 3.11f), V2(0.54f, 0.1f),  &editorData->UI_EntityCategory[currentEntityCategory]);
-
-	switch (currentEntityCategory) //replace with active portrait system
-	{
-	case EntityCategory_Terrain:
-		break;
-	case EntityCategory_Normans:
-		DrawSpritePixel(V2i(206, 682), V2i(23, 23), &editorData->UI_Portraits[5].activeSprite);
-		DrawSpritePixel(V2i(94, 566), V2i(23, 23), &editorData->UI_Portraits[6].activeSprite);
-		break;
-	case EntityCategory_Items:
-		break;
-	};
-
-	//94 left, 206 right
-	//682 top, 
-
-	/*
-	for (int i = 0; i < 4; i++)
-	{
-		DrawSprite(V2(-7.06f, 2.32f), V2(0.46f, 0.46f), &editorData->UI_ActivePortraits[i].activeSprite);
-	}
-	*/
 	
+	DrawSpritePixel(editorData->UI_PortraitPositions[0], V2i(23, 23), &editorData->UI_ActivePortraits[0].activeSprite);
+	DrawSpritePixel(editorData->UI_PortraitPositions[1], V2i(23, 23), &editorData->UI_ActivePortraits[1].activeSprite);
+	DrawSpritePixel(editorData->UI_PortraitPositions[2], V2i(23, 23), &editorData->UI_ActivePortraits[2].activeSprite);
+	DrawSpritePixel(editorData->UI_PortraitPositions[3], V2i(23, 23), &editorData->UI_ActivePortraits[3].activeSprite);
 
 }
 
@@ -322,23 +365,22 @@ void MyInit()
 
 	editorData = (MyData*)Game->myData;
 
-	SetGridSize(&editorData->levelGrid, 32, 16, V2(0, 0));
+	SetGridSize(&editorData->levelGrid, 8, 4, V2(-1,2.5f));
+
+	editorData->UI_PortraitPositions[0] = V2i(94, 682);
+	editorData->UI_PortraitPositions[1] = V2i(206, 682);
+	editorData->UI_PortraitPositions[2] = V2i(94, 566);
+	editorData->UI_PortraitPositions[3] = V2i(206, 566);
+
+	InitializeUI();
 
 	currentLevel.x = 1;
 	currentLevel.y = 1;
-	currentEntityCategory = EntityCategory_Normans;
+	currentEntityCategory = EntityCategory_Terrain;
 
 	gameMode = GameMode_Edit;
 
-
-
-	editorData->UI_PortraitPositions[0] = V2i(0, 0);
-	editorData->UI_PortraitPositions[1] = V2i(1, 0);
-	editorData->UI_PortraitPositions[2] = V2i(0, 1);
-	editorData->UI_PortraitPositions[3] = V2i(1, 1);
-
-
-	InitializeUI();
+	UpdateCategory();
 }
 
 void MyGameUpdate()
