@@ -37,6 +37,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		src\game_code.cpp = src\game_code.cpp
 		src\input.cpp = src\input.cpp
 		src\input.h = src\input.h
+		src\assignment1\leveleditor.cpp = src\assignment1\leveleditor.cpp
 		src\assignment1\levelmanager.cpp = src\assignment1\levelmanager.cpp
 		src\linux.cpp = src\linux.cpp
 		src\linux_api.cpp = src\linux_api.cpp

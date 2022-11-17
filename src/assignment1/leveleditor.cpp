@@ -66,6 +66,8 @@ struct MyData
 
 	//Entity Management
 	EntityManager entityManager;
+
+	LevelGrid levelGrid;
 };
 
 MyData* editorData = {};
@@ -320,11 +322,15 @@ void MyInit()
 
 	editorData = (MyData*)Game->myData;
 
-	currentLevel.x = 2;
-	currentLevel.y = 5;
+	SetGridSize(&editorData->levelGrid, 32, 16, V2(0, 0));
+
+	currentLevel.x = 1;
+	currentLevel.y = 1;
 	currentEntityCategory = EntityCategory_Normans;
 
 	gameMode = GameMode_Edit;
+
+
 
 	editorData->UI_PortraitPositions[0] = V2i(0, 0);
 	editorData->UI_PortraitPositions[1] = V2i(1, 0);
@@ -340,4 +346,5 @@ void MyGameUpdate()
 	ClearColor(RGB(0.0f, 0.0f, 0.0f));
 	LogicPhase();
 	RenderPhase();
+	DrawLevelGrid(&editorData->levelGrid);
 }

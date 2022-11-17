@@ -282,7 +282,7 @@ void DrawGrid() {
         DrawRect(rowLineCenter, scale, Mosaic->gridColor);
         
     }
-
+    
     for (int x = 0; x < Mosaic->gridWidth + 1; x++) {
         vec2 colLineCenter = Mosaic->gridOrigin + V2(0, (-Mosaic->gridSize.y * 0.5f)) + V2(x * Mosaic->tileSize, 0);
 

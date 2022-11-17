@@ -26,6 +26,67 @@
 
 */
 
+//MOST OF THIS IS JUST MOSAIC GRID DESIGN
+
+struct LevelGrid 
+{
+	real32 tileSize;
+
+	vec2 gridSize;
+	vec2 gridOrigin;
+
+	uint8 gridWidth;
+	uint8 gridHeight;
+
+	bool toggleGrid;
+
+	real32 lineThickness;
+};
+
+void DrawLevelGrid(LevelGrid* grid)
+{
+	for (int y = 0; y < grid->gridHeight + 1; y++)
+	{
+		vec2 rowLineCenter = grid->gridOrigin + V2((grid->gridSize.x * 0.5f), 0) + V2(0, -y * grid->tileSize);
+		vec2 scale = V2(grid->gridSize.x * 0.5f, grid->lineThickness);
+		if (y == 0 || y == grid->gridHeight)
+		{
+			scale = V2(grid->gridSize.x * 0.5f + grid->lineThickness, grid->lineThickness);
+		}
+
+		DrawRect(rowLineCenter, scale, V4(1, 1, 1, 1));
+	}
+
+	for (int x = 0; x < grid->gridWidth + 1; x++)
+	{
+		vec2 colLineCenter = grid->gridOrigin + V2(0, (-grid->gridSize.y * 0.5f)) + V2(x * grid->tileSize, 0);
+
+		vec2 scale = V2(grid->lineThickness, grid->gridSize.y * 0.5f);
+
+		if (x == 0 || x == grid->gridWidth)
+		{
+			scale = V2(grid->lineThickness, grid->gridSize.y * 0.5f + grid->lineThickness);
+		}
+
+		DrawRect(colLineCenter, scale, V4(1, 1, 1, 1));
+	}
+}
+
+void SetGridSize(LevelGrid* grid, uint32 newWidth, uint32 newHeight, vec2 gridOffset)
+{
+	grid->gridWidth = Clamp(newWidth, 1, 255);
+	grid->gridHeight = Clamp(newHeight, 1, 255);
+
+	grid->tileSize = 0.5f;
+
+	grid->lineThickness = grid->tileSize * 0.04f;
+
+	grid->gridSize.x = grid->tileSize * grid->gridWidth;
+	grid->gridSize.y = grid->tileSize * grid->gridHeight;
+
+	grid->gridOrigin = gridOffset + V2(-grid->gridSize.x * 0.5f, grid->gridSize.y * 0.5f);
+}
+
 void LevelTransition(vec2 ToLevelPosition, vec2 playerPosition)
 {
 
