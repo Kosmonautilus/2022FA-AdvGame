@@ -213,11 +213,12 @@ void UpdateCategory()
 	}
 }
 
-void ClickPositionCheck()
+void LeftClickPositionCheck()
 {
-	if (!onGrid) //There is a better way to do this but it would require restructuring how buttons work. Could have made an array of buttons and looped through.
+	if (!onGrid) //There is a DEFINITIVELY better way to do this but it would require restructuring how buttons work. 
+		//Could have made an array of buttons and looped through.
 	{
-		//category incrementer
+		/////////////////////////CATEGORY COUNTER///////////////////////////////////////////////////////////////////////////////
 		if (mousePosition.x >= 48 && mousePosition.x <= 68 && mousePosition.y >= 748 && mousePosition.y <= 776)
 		{
 			editorData->UI_LeftButton.isActive = true;
@@ -251,7 +252,8 @@ void ClickPositionCheck()
 			//move an index forward on editor category
 		}
 
-		if (mousePosition.x >= 94 && mousePosition.x <= 94 && mousePosition.y >= 682 && mousePosition.y <= 682) 
+		/////////////////////////PORTRAITS//////////////////////////////////////////////////////////////////////////////////////
+		if (mousePosition.x >= 44 && mousePosition.x <= 144 && mousePosition.y >= 632 && mousePosition.y <= 732)
 		{
 			editorData->UI_ActivePortraits[0].isActive = true;
 			editorData->UI_ActivePortraits[1].isActive = false;
@@ -259,7 +261,7 @@ void ClickPositionCheck()
 			editorData->UI_ActivePortraits[3].isActive = false;
 			//top left portrait
 		}
-		if (mousePosition.x >= 94 && mousePosition.x <= 94 && mousePosition.y >= 682 && mousePosition.y <= 682)
+		if (mousePosition.x >= 156 && mousePosition.x <= 256 && mousePosition.y >= 632 && mousePosition.y <= 732)
 		{
 			editorData->UI_ActivePortraits[0].isActive = false;
 			editorData->UI_ActivePortraits[1].isActive = true;
@@ -267,7 +269,7 @@ void ClickPositionCheck()
 			editorData->UI_ActivePortraits[3].isActive = false;
 			//top right portrait
 		}
-		if (mousePosition.x >= 94 && mousePosition.x <= 94 && mousePosition.y >= 682 && mousePosition.y <= 682)
+		if (mousePosition.x >= 44 && mousePosition.x <= 144 && mousePosition.y >= 516 && mousePosition.y <= 616)
 		{
 			editorData->UI_ActivePortraits[0].isActive = false;
 			editorData->UI_ActivePortraits[1].isActive = false;
@@ -275,7 +277,7 @@ void ClickPositionCheck()
 			editorData->UI_ActivePortraits[3].isActive = false;
 			//bot left portrait
 		}
-		if (mousePosition.x >= 206 && mousePosition.x <= 94 && mousePosition.y >= 566 && mousePosition.y <= 682)
+		if (mousePosition.x >= 156 && mousePosition.x <= 256 && mousePosition.y >= 516 && mousePosition.y <= 616)
 		{
 			editorData->UI_ActivePortraits[0].isActive = false;
 			editorData->UI_ActivePortraits[1].isActive = false;
@@ -283,32 +285,95 @@ void ClickPositionCheck()
 			editorData->UI_ActivePortraits[3].isActive = true;
 			//bot right portrait
 		}
-	}
-	/*
-	if (mousePosition.x >= && mousePosition.x <= && mousePosition.y >= && mousePosition.y <= )
-	{
+
+		if (mousePosition.x >= 108 && mousePosition.x <= 136 && mousePosition.y >= 288 && mousePosition.y <= 308)
+		{
+			if (currentLevel.x >= 9)
+			{
+				currentLevel.x = 1;
+			}
+			else
+			{
+				currentLevel.x++;
+			}
+
+		}
+		if (mousePosition.x >= 164 && mousePosition.x <= 192 && mousePosition.y >= 288 && mousePosition.y <= 308)
+		{
+			if (currentLevel.y >= 9)
+			{
+				currentLevel.y = 1;
+			}
+			else
+			{
+				currentLevel.y++;
+			}
+		}
+		if (mousePosition.x >= 108 && mousePosition.x <= 136 && mousePosition.y >= 180 && mousePosition.y <= 200)
+		{
+			if (currentLevel.x <= 1)
+			{
+				currentLevel.x = 9;
+			}
+			else
+			{
+				currentLevel.x--;
+			}
+		}
+		if (mousePosition.x >= 164 && mousePosition.x <= 192 && mousePosition.y >= 180 && mousePosition.y <= 200)
+		{
+			if (currentLevel.y <= 1)
+			{
+				currentLevel.y = 9;
+			}
+			else
+			{
+				currentLevel.y--;
+			}
+		}
+
 
 	}
-	*/
+	else if (onGrid && mousePosition.x > 300.0f)
+	{
+		//add entity at grid position
+	}
+}
+
+void UpdateGridPosition()
+{
+	if (!onGrid)
+	{
+		gridPosition = V2i(0, 0);
+	}
+	else
+	{
+		gridPosition = GetGridPosition(&editorData->levelGrid, mousePosition);
+	}
 }
 
 void InputLogic()
 {
 	//Get mouse position
 	mousePosition = Input->mousePos;
-	if (mousePosition.x <= 300.0f && gameMode == GameMode_Edit)
+	if (mousePosition.x < 300.0f && gameMode == GameMode_Edit)
 	{
 		onGrid = false;
 	}
-	else
+	else if (mousePosition.x >= 310.0f && mousePosition.x <= 1586 && mousePosition.y >= 0 && mousePosition.y <= 750)
 	{
 		onGrid = true;
+	}
+	else
+	{
+		onGrid = false;
 	}
 
 	if (InputPressed(Mouse, Input_MouseLeft))
 	{
-		ClickPositionCheck();
+		LeftClickPositionCheck();
 	}
+	UpdateGridPosition();
 }
 
 void DrawUI()
@@ -356,6 +421,10 @@ void LogicPhase()
 void RenderPhase()
 {
 	DrawUI();
+
+	DrawTextScreenPixel(&Game->monoFont, V2(320, 20), 10.0f, RGB(1, 1, 1), "On grid: %i", onGrid);
+	DrawTextScreenPixel(&Game->monoFont, V2(320, 40), 10.0f, RGB(1, 1, 1), "Pixel position: (%i, %i)", mousePosition.x, mousePosition.y);
+	DrawTextScreenPixel(&Game->monoFont, V2(320, 60), 10.0f, RGB(1, 1, 1), "Grid position: (%i, %i)", gridPosition.x, gridPosition.y);
 }
 
 void MyInit()
@@ -365,7 +434,7 @@ void MyInit()
 
 	editorData = (MyData*)Game->myData;
 
-	SetGridSize(&editorData->levelGrid, 8, 4, V2(-1,2.5f));
+	SetGridSize(&editorData->levelGrid,0.75f, 17, 10, V2(1.5f,-0.75f)); //shifted right for now, in game the x axis will be centered.
 
 	editorData->UI_PortraitPositions[0] = V2i(94, 682);
 	editorData->UI_PortraitPositions[1] = V2i(206, 682);

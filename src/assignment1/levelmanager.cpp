@@ -72,12 +72,12 @@ void DrawLevelGrid(LevelGrid* grid)
 	}
 }
 
-void SetGridSize(LevelGrid* grid, uint32 newWidth, uint32 newHeight, vec2 gridOffset)
+void SetGridSize(LevelGrid* grid, float tileSize, uint32 newWidth, uint32 newHeight, vec2 gridOffset)
 {
 	grid->gridWidth = Clamp(newWidth, 1, 255);
 	grid->gridHeight = Clamp(newHeight, 1, 255);
 
-	grid->tileSize = 1;
+	grid->tileSize = tileSize;
 
 	grid->lineThickness = 0.01f;
 
@@ -86,6 +86,32 @@ void SetGridSize(LevelGrid* grid, uint32 newWidth, uint32 newHeight, vec2 gridOf
 
 	grid->gridOrigin = gridOffset + V2(-grid->gridSize.x * 0.5f, grid->gridSize.y * 0.5f);
 }
+
+vec2i GetGridPosition(LevelGrid* grid, vec2i mousePosition)
+{
+/*	vec2 gOrigin = V2(gridOrigin.x + (Game->screenWidth / 200) * (Game->screenWidth / 16),
+		              (gridOrigin.y + (Game->screenHeight / 200) * (Game->screenHeight / 9))); //unsign, convert to pixel.
+					  */
+	/*
+	vec2 gOrigin = V2(grid->gridOrigin.x + (Game->screenWidth / 200), grid->gridOrigin.y + (Game->screenHeight / 200));
+		 gOrigin = V2(gOrigin.x * (Game->screenWidth / 16), gOrigin.y * (Game->screenHeight / 9));
+
+	vec2i gridPosition = V2i((mousePosition.x - gOrigin.x) / grid->gridSize.x, (mousePosition.y - gOrigin.y) / grid->gridSize.y);
+		return gridPosition;
+
+		*/
+	return mousePosition;
+}
+
+void GetGridCenter(vec2 gridPosition)
+{
+
+}
+
+/*vec2i GridToWorldPosition(LevelGrid* grid)
+{
+	return;
+}*/
 
 void LevelTransition(vec2 ToLevelPosition, vec2 playerPosition)
 {
