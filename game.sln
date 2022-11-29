@@ -23,6 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		src\audio.h = src\audio.h
 		src\camera.h = src\camera.h
 		src\collections.h = src\collections.h
+		src\assignment1\collisiondetection.cpp = src\assignment1\collisiondetection.cpp
 		src\commonlib.h = src\commonlib.h
 		src\dynamic_array.h = src\dynamic_array.h
 		src\assignment1\enemylogic.cpp = src\assignment1\enemylogic.cpp

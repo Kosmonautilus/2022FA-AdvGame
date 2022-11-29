@@ -1,18 +1,21 @@
 #include "assignment1/levelmanager.cpp"
+#include "assignment1/collisiondetection.cpp"
 
 enum DrawMode
 {
-	DrawMode_Square,
-	DrawMode_Line,
+	DrawMode_Select,
+	DrawMode_Delete,
 	DrawMode_Single,
-	DrawMode_Delete
+	DrawMode_Multi
 };
 
 enum GameMode
 {
 	GameMode_Edit,
+	GameMode_PlacePlayer,
 	GameMode_Test
 };
+
 enum EntityCategory
 {
 	EntityCategory_Terrain,
@@ -24,14 +27,18 @@ enum EntityCategory
 struct EditorButton
 {
 	bool isActive;
+	Rect position;
 
 	Sprite buttonSprite;
 	Sprite clickedSprite;
+
+	float timeSincePress;
 };
 
 struct PortraitButton
 {
 	EntityType portraitEntity;
+	Rect position;
 
 	bool isActive;
 
@@ -48,6 +55,13 @@ struct MyData
 	EditorButton UI_DownButton[2];
 	EditorButton UI_LeftButton;
 	EditorButton UI_RightButton;
+
+	EditorButton UI_DrawMode_SingleButton;
+	EditorButton UI_DrawMode_LineButton;
+	EditorButton UI_DrawMode_MultiButton;
+	EditorButton UI_DrawMode_DeleteButton;
+
+	EditorButton UI_DrawMode_SelectButton;
 
 	EditorButton UI_SaveButton;
 	EditorButton UI_LoadButton;
@@ -72,15 +86,19 @@ struct MyData
 MyData* editorData = {};
 
 GameMode gameMode;
+DrawMode drawMode;
 
-vec2i mousePosition;
+vec2 mousePosition;
 
 bool onGrid;
 vec2i gridPosition;
+vec2 gridWorldPosition;
 
 EntityType selectedEntityType;
-vec2 currentLevel;
+vec2 placeEntityDirection;
 EntityCategory currentEntityCategory;
+
+vec2 currentLevel;
 
 
 EntityHandle selectedEntities[1000];
@@ -91,19 +109,81 @@ void InitializeUI()
 	//Initialize sprites
 	LoadSprite(&editorData->UI_Background, "data/ui/UI_PanelBackground.png");
 
-	LoadSprite(&editorData->UI_UpButton[0].buttonSprite,   "data/ui/UI_ButtonUp.png");
-	LoadSprite(&editorData->UI_UpButton[1].buttonSprite,   "data/ui/UI_ButtonUp.png");
-	LoadSprite(&editorData->UI_DownButton[0].buttonSprite, "data/ui/UI_ButtonDown.png");
-	LoadSprite(&editorData->UI_DownButton[1].buttonSprite, "data/ui/UI_ButtonDown.png");
 
-	LoadSprite(&editorData->UI_LeftButton.buttonSprite,    "data/ui/UI_ButtonLeft.png");
-	LoadSprite(&editorData->UI_RightButton.buttonSprite,   "data/ui/UI_ButtonRight.png");
+	LoadSprite(&editorData->UI_LeftButton.buttonSprite, "data/ui/UI_ButtonLeft.png"); //CATEGORY LEFT
+	LoadSprite(&editorData->UI_LeftButton.clickedSprite, "data/ui/UI_ButtonLeft_Active.png");
+	editorData->UI_LeftButton.position.min = V2(-7.52f, 2.98f);
+	editorData->UI_LeftButton.position.max = V2(-7.32f, 3.26f);
 
-	LoadSprite(&editorData->UI_SaveButton.buttonSprite,    "data/ui/UI_SaveLevelButton.png");
-	LoadSprite(&editorData->UI_LoadButton.buttonSprite,    "data/ui/UI_LoadLevelButton.png");
-	LoadSprite(&editorData->UI_ClearButton.buttonSprite,   "data/ui/UI_ClearLevelButton.png");
+	LoadSprite(&editorData->UI_RightButton.buttonSprite, "data/ui/UI_ButtonRight.png"); //CATEGORY RIGHT
+	LoadSprite(&editorData->UI_RightButton.clickedSprite, "data/ui/UI_ButtonRight_Active.png");
+	editorData->UI_RightButton.position.min = V2(-5.68f, 2.98f);
+	editorData->UI_RightButton.position.max = V2(-5.48f, 3.26f);
 
-	LoadSprite(&editorData->UI_PlayButton.buttonSprite, "data/ui/UI_PlayButton.png");
+
+	LoadSprite(&editorData->UI_DrawMode_SelectButton.buttonSprite, "data/ui/UI_DrawMode_SelectButton.png"); //SELECT BUTTON
+	LoadSprite(&editorData->UI_DrawMode_SelectButton.clickedSprite, "data/ui/UI_DrawMode_SelectButton_Active.png");
+	editorData->UI_DrawMode_SelectButton.position.min = V2(-7.0f, -0.46f);
+	editorData->UI_DrawMode_SelectButton.position.max = V2(-6.6f, -0.06f);
+
+	LoadSprite(&editorData->UI_DrawMode_DeleteButton.buttonSprite, "data/ui/UI_DrawMode_DeleteButton.png"); //DELETE BUTTON
+	LoadSprite(&editorData->UI_DrawMode_DeleteButton.clickedSprite, "data/ui/UI_DrawMode_DeleteButton_Active.png");
+	editorData->UI_DrawMode_DeleteButton.position.min = V2(-6.4f, -0.46f);
+	editorData->UI_DrawMode_DeleteButton.position.max = V2(-6.0f, -0.06f);
+
+	LoadSprite(&editorData->UI_DrawMode_SingleButton.buttonSprite, "data/ui/UI_DrawMode_SingleButton.png"); //SINGLE DRAW BUTTON
+	LoadSprite(&editorData->UI_DrawMode_SingleButton.clickedSprite, "data/ui/UI_DrawMode_SingleButton_Active.png");
+	editorData->UI_DrawMode_SingleButton.position.min = V2(-7.0f, -1.06f);
+	editorData->UI_DrawMode_SingleButton.position.max = V2(-6.6f, -0.66f);
+
+	LoadSprite(&editorData->UI_DrawMode_MultiButton.buttonSprite, "data/ui/UI_DrawMode_MultiButton.png"); //MULTI DRAW BUTTON
+	LoadSprite(&editorData->UI_DrawMode_MultiButton.clickedSprite, "data/ui/UI_DrawMode_MultiButton_Active.png");
+	editorData->UI_DrawMode_MultiButton.position.min = V2(-6.4f, -1.06f);
+	editorData->UI_DrawMode_MultiButton.position.max = V2(-6.0f, -0.66f);
+
+
+	LoadSprite(&editorData->UI_UpButton[0].buttonSprite,   "data/ui/UI_ButtonUp.png"); //X UP
+	LoadSprite(&editorData->UI_UpButton[0].clickedSprite, "data/ui/UI_ButtonUp_Active.png");
+	editorData->UI_UpButton[0].position.min = V2(-6.92f, -1.62f);
+	editorData->UI_UpButton[0].position.max = V2(-6.64f, -1.42f);
+
+	LoadSprite(&editorData->UI_UpButton[1].buttonSprite,   "data/ui/UI_ButtonUp.png"); //Y UP
+	LoadSprite(&editorData->UI_UpButton[1].clickedSprite, "data/ui/UI_ButtonUp_Active.png");
+	editorData->UI_UpButton[1].position.min = V2(-6.36f, -1.62f);
+	editorData->UI_UpButton[1].position.max = V2(-6.08f, -1.42f);
+
+
+	LoadSprite(&editorData->UI_DownButton[0].buttonSprite, "data/ui/UI_ButtonDown.png"); //X DOWN
+	LoadSprite(&editorData->UI_DownButton[0].clickedSprite, "data/ui/UI_ButtonDown_Active.png");
+	editorData->UI_DownButton[0].position.min = V2(-6.92f,-2.7f);
+	editorData->UI_DownButton[0].position.max = V2(-6.64f,-2.5f);
+
+	LoadSprite(&editorData->UI_DownButton[1].buttonSprite, "data/ui/UI_ButtonDown.png"); //Y DOWN
+	LoadSprite(&editorData->UI_DownButton[1].clickedSprite, "data/ui/UI_ButtonDown_Active.png");
+	editorData->UI_DownButton[1].position.min = V2(-6.36f, -2.7f);
+	editorData->UI_DownButton[1].position.max = V2(-6.08f, -2.5f);
+
+
+	LoadSprite(&editorData->UI_SaveButton.buttonSprite,    "data/ui/UI_SaveLevelButton.png"); //SAVE 
+	LoadSprite(&editorData->UI_SaveButton.clickedSprite, "data/ui/UI_SaveLevelButton_Active.png");
+	editorData->UI_SaveButton.position.min = V2(-7.08f, -3.54f);
+	editorData->UI_SaveButton.position.max = V2(-6.60f, -3.06f);
+
+	LoadSprite(&editorData->UI_LoadButton.buttonSprite,    "data/ui/UI_LoadLevelButton.png"); //LOAD
+	LoadSprite(&editorData->UI_LoadButton.clickedSprite, "data/ui/UI_LoadLevelButton_Active.png");
+	editorData->UI_LoadButton.position.min = V2(-6.40f, -3.54f);
+	editorData->UI_LoadButton.position.max = V2(-5.92f, -3.06f);
+
+	LoadSprite(&editorData->UI_ClearButton.buttonSprite,   "data/ui/UI_ClearLevelButton.png"); //CLEAR
+	LoadSprite(&editorData->UI_ClearButton.clickedSprite, "data/ui/UI_ClearLevelButton_Active.png");
+	editorData->UI_ClearButton.position.min = V2(-5.72f, -3.50f);
+	editorData->UI_ClearButton.position.max = V2(-5.32f, -3.10f);
+
+
+	LoadSprite(&editorData->UI_PlayButton.buttonSprite, "data/ui/UI_PlayButton.png"); //PLAY BUTTON
+	LoadSprite(&editorData->UI_PlayButton.clickedSprite, "data/ui/UI_PlayButton_Active.png");
+	editorData->UI_PlayButton.position.min = V2(-7.24f, -4.38f);
+	editorData->UI_PlayButton.position.max = V2(-5.76f, -3.78f);
 
 	LoadSprite(&editorData->UI_Number[0], "data/ui/UI_Font_0.png");
 	LoadSprite(&editorData->UI_Number[1], "data/ui/UI_Font_1.png");
@@ -136,8 +216,8 @@ void InitializeUI()
 	LoadSprite(&editorData->UI_Portraits[6].activeSprite,  "data/ui/UI_Portrait_Knight.png");
 	editorData->UI_Portraits[6].portraitEntity = EntityType_Knight;
 
-  //LoadSprite(&editorData->UI_Portraits[7].activeSprite,  "data/ui/UI_Portrait_Wizard.png");
-  //editorData->UI_Portraits[7].portraitEntity = EntityType_Wizard; 
+    LoadSprite(&editorData->UI_Portraits[7].activeSprite,  "data/ui/UI_Portrait_Wizard.png");
+    editorData->UI_Portraits[7].portraitEntity = EntityType_Wizard; 
   
   //LoadSprite(&editorData->UI_Portraits[8].activeSprite,  "data/ui/UI_Portrait_Chicken.png");
   //LoadSprite(&editorData->UI_Portraits[9].activeSprite,  "data/ui/UI_Portrait_Potion.png");
@@ -164,7 +244,6 @@ void PlaceEntity(vec2 gridPosition, EntityType type)
 		Entity* e = (Entity*)GetEntity(&editorData->entityManager, entityHandle);
 		e->position.x = gridPosition.x;
 		e->position.y = gridPosition.y;
-		
 	}
 }
 
@@ -219,7 +298,7 @@ void LeftClickPositionCheck()
 		//Could have made an array of buttons and looped through.
 	{
 		/////////////////////////CATEGORY COUNTER///////////////////////////////////////////////////////////////////////////////
-		if (mousePosition.x >= 48 && mousePosition.x <= 68 && mousePosition.y >= 748 && mousePosition.y <= 776)
+		if (RectPointTest(mousePosition, editorData->UI_LeftButton.position))
 		{
 			editorData->UI_LeftButton.isActive = true;
 
@@ -235,8 +314,9 @@ void LeftClickPositionCheck()
 			}
 			//move an index back on editor category
 		}
-		if (mousePosition.x >= 232 && mousePosition.x <= 252 && mousePosition.y >= 748 && mousePosition.y <= 776)
+		if (RectPointTest(mousePosition, editorData->UI_RightButton.position))
 		{
+			editorData->UI_RightButton.isActive = true;
 			if (currentEntityCategory < EntityCategory_Count - 1)
 			{
 				currentEntityCategory = (EntityCategory)(currentEntityCategory + 1);
@@ -248,7 +328,6 @@ void LeftClickPositionCheck()
 				UpdateCategory();
 			}
 
-			editorData->UI_RightButton.isActive = true;
 			//move an index forward on editor category
 		}
 
@@ -286,8 +365,9 @@ void LeftClickPositionCheck()
 			//bot right portrait
 		}
 
-		if (mousePosition.x >= 108 && mousePosition.x <= 136 && mousePosition.y >= 288 && mousePosition.y <= 308)
+		if (RectPointTest(mousePosition, editorData->UI_UpButton[0].position)) //INCREMENT CURRENT LEVEL X UP
 		{
+			editorData->UI_UpButton[0].isActive = true;
 			if (currentLevel.x >= 9)
 			{
 				currentLevel.x = 1;
@@ -298,8 +378,9 @@ void LeftClickPositionCheck()
 			}
 
 		}
-		if (mousePosition.x >= 164 && mousePosition.x <= 192 && mousePosition.y >= 288 && mousePosition.y <= 308)
+		if (RectPointTest(mousePosition, editorData->UI_UpButton[1].position)) //INCREMENT CURRENT LEVEL Y UP
 		{
+			editorData->UI_UpButton[1].isActive = true;
 			if (currentLevel.y >= 9)
 			{
 				currentLevel.y = 1;
@@ -309,8 +390,9 @@ void LeftClickPositionCheck()
 				currentLevel.y++;
 			}
 		}
-		if (mousePosition.x >= 108 && mousePosition.x <= 136 && mousePosition.y >= 180 && mousePosition.y <= 200)
+		if (RectPointTest(mousePosition, editorData->UI_DownButton[0].position)) //INCREMENT CURRENT LEVEL X DOWN
 		{
+			editorData->UI_DownButton[0].isActive = true;
 			if (currentLevel.x <= 1)
 			{
 				currentLevel.x = 9;
@@ -320,8 +402,9 @@ void LeftClickPositionCheck()
 				currentLevel.x--;
 			}
 		}
-		if (mousePosition.x >= 164 && mousePosition.x <= 192 && mousePosition.y >= 180 && mousePosition.y <= 200)
+		if (RectPointTest(mousePosition, editorData->UI_DownButton[1].position)) //INCREMENT CURRENT LEVEL Y DOWN
 		{
+			editorData->UI_DownButton[1].isActive = true;
 			if (currentLevel.y <= 1)
 			{
 				currentLevel.y = 9;
@@ -331,12 +414,74 @@ void LeftClickPositionCheck()
 				currentLevel.y--;
 			}
 		}
+		if (RectPointTest(mousePosition, editorData->UI_DrawMode_SelectButton.position))
+		{
+			drawMode = DrawMode_Select;
+			editorData->UI_DrawMode_SelectButton.isActive = true;
+			editorData->UI_DrawMode_DeleteButton.isActive = false;
+			editorData->UI_DrawMode_SingleButton.isActive = false;
+			editorData->UI_DrawMode_MultiButton.isActive = false;
+		}
+		if (RectPointTest(mousePosition, editorData->UI_DrawMode_DeleteButton.position))
+		{
+			drawMode = DrawMode_Delete;
+			editorData->UI_DrawMode_SelectButton.isActive = false;
+			editorData->UI_DrawMode_DeleteButton.isActive = true;
+			editorData->UI_DrawMode_SingleButton.isActive = false;
+			editorData->UI_DrawMode_MultiButton.isActive = false;
 
+		}
+		if (RectPointTest(mousePosition, editorData->UI_DrawMode_SingleButton.position))
+		{
+			drawMode = DrawMode_Single;
+			editorData->UI_DrawMode_SelectButton.isActive = false;
+			editorData->UI_DrawMode_DeleteButton.isActive = false;
+			editorData->UI_DrawMode_SingleButton.isActive = true;
+			editorData->UI_DrawMode_MultiButton.isActive = false;
+		}
+		if (RectPointTest(mousePosition, editorData->UI_DrawMode_MultiButton.position))
+		{
+			drawMode = DrawMode_Multi;
+			editorData->UI_DrawMode_SelectButton.isActive = false;
+			editorData->UI_DrawMode_DeleteButton.isActive = false;
+			editorData->UI_DrawMode_SingleButton.isActive = false;
+			editorData->UI_DrawMode_MultiButton.isActive = true;
+		}
+
+		if (RectPointTest(mousePosition, editorData->UI_SaveButton.position))
+		{
+			editorData->UI_SaveButton.isActive = true;
+		}
+
+		if (RectPointTest(mousePosition, editorData->UI_LoadButton.position))
+		{
+			editorData->UI_LoadButton.isActive = true;
+		}
+
+		if (RectPointTest(mousePosition, editorData->UI_ClearButton.position))
+		{
+			editorData->UI_ClearButton.isActive = true;
+		}
+
+		if (RectPointTest(mousePosition, editorData->UI_PlayButton.position))
+		{
+			editorData->UI_PlayButton.isActive = true;
+		}
 
 	}
-	else if (onGrid && mousePosition.x > 300.0f)
+	else if (onGrid)
 	{
-		//add entity at grid position
+		switch (drawMode)
+		{
+			case DrawMode_Select:
+				break;
+			case DrawMode_Delete:
+				break;
+			case DrawMode_Single:
+				break;
+			case DrawMode_Multi:
+				break;
+		}
 	}
 }
 
@@ -344,23 +489,29 @@ void UpdateGridPosition()
 {
 	if (!onGrid)
 	{
-		gridPosition = V2i(0, 0);
+		gridPosition = V2i(-999, -999);
+		gridWorldPosition = V2(-999, -999);
 	}
 	else
 	{
-		gridPosition = GetGridPosition(&editorData->levelGrid, mousePosition);
+		gridPosition = GetGridPosition(&editorData->levelGrid);
+		gridWorldPosition = GridToWorldPosition(&editorData->levelGrid, gridPosition);
 	}
 }
 
 void InputLogic()
 {
 	//Get mouse position
-	mousePosition = Input->mousePos;
-	if (mousePosition.x < 300.0f && gameMode == GameMode_Edit)
+	mousePosition.x = Input->mousePosNormSigned.x * 8;
+	mousePosition.y = Input->mousePosNormSigned.y * 4.5f;
+	if (mousePosition.x < -5.0f && gameMode == GameMode_Edit)
 	{
 		onGrid = false;
 	}
-	else if (mousePosition.x >= 310.0f && mousePosition.x <= 1586 && mousePosition.y >= 0 && mousePosition.y <= 750)
+	else if (mousePosition.x >= editorData->levelGrid.gridOrigin.x 
+		  && mousePosition.x <= editorData->levelGrid.gridSize.x + editorData->levelGrid.gridOrigin.x
+		  && mousePosition.y <= editorData->levelGrid.gridOrigin.y
+		  && mousePosition.y >= editorData->levelGrid.gridOrigin.y - editorData->levelGrid.gridSize.y)
 	{
 		onGrid = true;
 	}
@@ -383,32 +534,219 @@ void DrawUI()
 
 	DrawSpritePixel(V2i(150, 450), V2i(75, 225), &editorData->UI_Background);
 
-	DrawSprite(V2(-6.5f, -4.08f), V2(0.74, 0.3),    &editorData->UI_PlayButton.buttonSprite);
-	DrawSprite(V2(-6.84f, -3.3f), V2(0.24, 0.24),   &editorData->UI_SaveButton.buttonSprite);
-	DrawSprite(V2(-6.16f, -3.3f), V2(0.24, 0.24),   &editorData->UI_LoadButton.buttonSprite);
-	DrawSprite(V2(-5.52f, -3.3f), V2(0.2, 0.2),     &editorData->UI_ClearButton.buttonSprite);
+	DrawSprite(V2(-6.52f, 3.11f), V2(0.54f, 0.1f), &editorData->UI_EntityCategory[currentEntityCategory]);
+	
+	if (editorData->UI_LeftButton.isActive && editorData->UI_LeftButton.timeSincePress < 0.1f)           
+	{
+		DrawSprite(V2(-7.42f, 3.12f), V2(0.1, 0.14), &editorData->UI_LeftButton.clickedSprite);
+		editorData->UI_LeftButton.timeSincePress += 1 * DeltaTime;
+	}
+	else
+	{
+		DrawSprite(V2(-7.42f, 3.12f), V2(0.1, 0.14), &editorData->UI_LeftButton.buttonSprite);
+	}
 
-	DrawSprite(V2(-6.78f, -2.6f), V2(0.14, 0.1),    &editorData->UI_DownButton[0].buttonSprite);
-	DrawSprite(V2(-6.22f, -2.6f), V2(0.14, 0.1),    &editorData->UI_DownButton[1].buttonSprite);
+	if (editorData->UI_RightButton.isActive && editorData->UI_RightButton.timeSincePress < 0.1f)
+	{
+		DrawSprite(V2(-5.58f, 3.12f), V2(0.1, 0.14), &editorData->UI_RightButton.clickedSprite);
+		editorData->UI_RightButton.timeSincePress += 1 * DeltaTime;
+	}
+	else
+	{
+		DrawSprite(V2(-5.58f, 3.12f), V2(0.1, 0.14), &editorData->UI_RightButton.buttonSprite);
+	}
 
-	DrawSprite(V2(-6.78f, -1.52f), V2(0.14, 0.1),   &editorData->UI_UpButton[0].buttonSprite);
-	DrawSprite(V2(-6.22f, -1.52f), V2(0.14, 0.1),   &editorData->UI_UpButton[1].buttonSprite);
 
-	DrawSprite(V2(-7.42f, 3.12f), V2(0.1,0.14),     &editorData->UI_LeftButton.buttonSprite);
-	DrawSprite(V2(-5.58f, 3.12f), V2(0.1, 0.14),    &editorData->UI_RightButton.buttonSprite);
+	if (editorData->UI_DrawMode_SelectButton.isActive )
+	{
+		DrawSprite(V2(-6.8f, -0.26f), V2(0.2, 0.2), &editorData->UI_DrawMode_SelectButton.clickedSprite);
+	}
+	else
+	{
+		DrawSprite(V2(-6.8f, -0.26f), V2(0.2, 0.2), &editorData->UI_DrawMode_SelectButton.buttonSprite);
+	}
+
+	if (editorData->UI_DrawMode_DeleteButton.isActive)
+	{
+		DrawSprite(V2(-6.2f, -0.26f), V2(0.2, 0.2), &editorData->UI_DrawMode_DeleteButton.clickedSprite);
+	}
+	else
+	{
+		DrawSprite(V2(-6.2f, -0.26f), V2(0.2, 0.2), &editorData->UI_DrawMode_DeleteButton.buttonSprite);
+	}
+
+	if (editorData->UI_DrawMode_SingleButton.isActive)
+	{
+		DrawSprite(V2(-6.8f, -0.86f), V2(0.2, 0.2), &editorData->UI_DrawMode_SingleButton.clickedSprite);
+	}
+	else
+	{
+		DrawSprite(V2(-6.8f, -0.86f), V2(0.2, 0.2), &editorData->UI_DrawMode_SingleButton.buttonSprite);
+	}
+
+	if (editorData->UI_DrawMode_MultiButton.isActive)
+	{
+		DrawSprite(V2(-6.2f, -0.86f), V2(0.2, 0.2), &editorData->UI_DrawMode_MultiButton.clickedSprite);
+	}
+	else
+	{
+		DrawSprite(V2(-6.2f, -0.86f), V2(0.2, 0.2), &editorData->UI_DrawMode_MultiButton.buttonSprite);
+	}
+
+	if (editorData->UI_DownButton[0].isActive)
+	{
+		DrawSprite(V2(-6.78f, -2.6f), V2(0.14, 0.1), &editorData->UI_DownButton[0].clickedSprite);
+		editorData->UI_DownButton[0].timeSincePress += 1 * DeltaTime;
+	}
+	else
+	{
+		DrawSprite(V2(-6.78f, -2.6f), V2(0.14, 0.1), &editorData->UI_DownButton[0].buttonSprite);
+	}
+
+	if (editorData->UI_DownButton[1].isActive)
+	{
+		DrawSprite(V2(-6.22f, -2.6f), V2(0.14, 0.1), &editorData->UI_DownButton[1].clickedSprite);
+		editorData->UI_DownButton[1].timeSincePress += 1 * DeltaTime;
+	}
+	else
+	{
+		DrawSprite(V2(-6.22f, -2.6f), V2(0.14, 0.1), &editorData->UI_DownButton[1].buttonSprite);
+	}
+
+
+	if (editorData->UI_UpButton[0].isActive)
+	{
+		DrawSprite(V2(-6.78f, -1.52f), V2(0.14, 0.1), &editorData->UI_UpButton[0].clickedSprite);
+		editorData->UI_UpButton[0].timeSincePress += 1 * DeltaTime;
+	}
+	else
+	{
+		DrawSprite(V2(-6.78f, -1.52f), V2(0.14, 0.1), &editorData->UI_UpButton[0].buttonSprite);
+	}
+
+	if (editorData->UI_UpButton[1].isActive)
+	{
+		DrawSprite(V2(-6.22f, -1.52f), V2(0.14, 0.1), &editorData->UI_UpButton[1].clickedSprite);
+		editorData->UI_UpButton[1].timeSincePress += 1 * DeltaTime;
+	}
+	else
+	{
+		DrawSprite(V2(-6.22f, -1.52f), V2(0.14, 0.1), &editorData->UI_UpButton[1].buttonSprite);
+	}
+
+
+	if (editorData->UI_SaveButton.isActive)
+	{
+		DrawSprite(V2(-6.84f, -3.3f), V2(0.24, 0.24), &editorData->UI_SaveButton.clickedSprite);
+		editorData->UI_SaveButton.timeSincePress += 1 * DeltaTime;
+	}
+	else
+	{
+		DrawSprite(V2(-6.84f, -3.3f), V2(0.24, 0.24), &editorData->UI_SaveButton.buttonSprite);
+	}
+
+	if (editorData->UI_LoadButton.isActive)
+	{
+		DrawSprite(V2(-6.16f, -3.3f), V2(0.24, 0.24), &editorData->UI_LoadButton.clickedSprite);
+		editorData->UI_LoadButton.timeSincePress += 1 * DeltaTime;
+	}
+	else
+	{
+		DrawSprite(V2(-6.16f, -3.3f), V2(0.24, 0.24), &editorData->UI_LoadButton.buttonSprite);
+	}
+
+	if (editorData->UI_ClearButton.isActive)
+	{
+		DrawSprite(V2(-5.52f, -3.3f), V2(0.2, 0.2), &editorData->UI_ClearButton.clickedSprite);
+		editorData->UI_ClearButton.timeSincePress += 1 * DeltaTime;
+	}
+	else
+	{
+		DrawSprite(V2(-5.52f, -3.3f), V2(0.2, 0.2), &editorData->UI_ClearButton.buttonSprite);
+	}
+
+	if (editorData->UI_PlayButton.isActive)
+	{
+		DrawSprite(V2(-6.5f, -4.08f), V2(0.74, 0.3), &editorData->UI_PlayButton.clickedSprite);
+		editorData->UI_PlayButton.timeSincePress += 1 * DeltaTime;
+	}
+	else
+	{
+		DrawSprite(V2(-6.5f, -4.08f), V2(0.74, 0.3), &editorData->UI_PlayButton.buttonSprite);
+	}
+
+
 
 	DrawSprite(V2(-6.78f, -2.06f), V2(0.1, 0.2),    &editorData->UI_Number[(uint8)currentLevel.x]);
 	DrawSprite(V2(-6.22f, -2.06f), V2(0.1, 0.2),    &editorData->UI_Number[(uint8)currentLevel.y]);
 	DrawSprite(V2(-6.5f, -2.06f), V2(0.1, 0.2),     &editorData->UI_Hyphen);
 
-
-	DrawSprite(V2(-6.52f, 3.11f), V2(0.54f, 0.1f),  &editorData->UI_EntityCategory[currentEntityCategory]);
 	
 	DrawSpritePixel(editorData->UI_PortraitPositions[0], V2i(23, 23), &editorData->UI_ActivePortraits[0].activeSprite);
 	DrawSpritePixel(editorData->UI_PortraitPositions[1], V2i(23, 23), &editorData->UI_ActivePortraits[1].activeSprite);
 	DrawSpritePixel(editorData->UI_PortraitPositions[2], V2i(23, 23), &editorData->UI_ActivePortraits[2].activeSprite);
 	DrawSpritePixel(editorData->UI_PortraitPositions[3], V2i(23, 23), &editorData->UI_ActivePortraits[3].activeSprite);
 
+	if (editorData->UI_UpButton[0].isActive && editorData->UI_UpButton[0].timeSincePress >= 0.1f)
+	{
+		editorData->UI_UpButton[0].isActive = false;
+		editorData->UI_UpButton[0].timeSincePress = 0.0f;
+	}
+
+	if (editorData->UI_UpButton[1].isActive && editorData->UI_UpButton[1].timeSincePress >= 0.1f)
+	{
+		editorData->UI_UpButton[1].isActive = false;
+		editorData->UI_UpButton[1].timeSincePress = 0.0f;
+	}
+
+	if (editorData->UI_DownButton[0].isActive && editorData->UI_DownButton[0].timeSincePress >= 0.1f)
+	{
+		editorData->UI_DownButton[0].isActive = false;
+		editorData->UI_DownButton[0].timeSincePress = 0.0f;
+	}
+	
+	if (editorData->UI_DownButton[1].isActive && editorData->UI_DownButton[1].timeSincePress >= 0.1f)
+	{
+		editorData->UI_DownButton[1].isActive = false;
+		editorData->UI_DownButton[1].timeSincePress = 0.0f;
+	}
+
+	if (editorData->UI_LeftButton.isActive && editorData->UI_LeftButton.timeSincePress >= 0.1f)
+	{
+		editorData->UI_LeftButton.isActive = false;
+		editorData->UI_LeftButton.timeSincePress = 0.0f;
+	}
+
+	if (editorData->UI_RightButton.isActive && editorData->UI_RightButton.timeSincePress >= 0.1f)
+	{
+		editorData->UI_RightButton.isActive = false;
+		editorData->UI_RightButton.timeSincePress = 0.0f;
+	}
+
+	if (editorData->UI_SaveButton.isActive && editorData->UI_SaveButton.timeSincePress >= 0.1f)
+	{
+		editorData->UI_SaveButton.isActive = false;
+		editorData->UI_SaveButton.timeSincePress = 0.0f;
+	}
+
+	if (editorData->UI_LoadButton.isActive && editorData->UI_LoadButton.timeSincePress >= 0.1f)
+	{
+		editorData->UI_LoadButton.isActive = false;
+		editorData->UI_LoadButton.timeSincePress = 0.0f;
+	}
+
+	if (editorData->UI_ClearButton.isActive && editorData->UI_ClearButton.timeSincePress >= 0.1f)
+	{
+		editorData->UI_ClearButton.isActive = false;
+		editorData->UI_ClearButton.timeSincePress = 0.0f;
+	}
+
+	if (editorData->UI_PlayButton.isActive && editorData->UI_PlayButton.timeSincePress >= 0.1f)
+	{
+		editorData->UI_PlayButton.isActive = false;
+		editorData->UI_PlayButton.timeSincePress = 0.0f;
+	}
+	
 }
 
 
@@ -421,10 +759,11 @@ void LogicPhase()
 void RenderPhase()
 {
 	DrawUI();
-
-	DrawTextScreenPixel(&Game->monoFont, V2(320, 20), 10.0f, RGB(1, 1, 1), "On grid: %i", onGrid);
-	DrawTextScreenPixel(&Game->monoFont, V2(320, 40), 10.0f, RGB(1, 1, 1), "Pixel position: (%i, %i)", mousePosition.x, mousePosition.y);
-	DrawTextScreenPixel(&Game->monoFont, V2(320, 60), 10.0f, RGB(1, 1, 1), "Grid position: (%i, %i)", gridPosition.x, gridPosition.y);
+	
+	DrawTextScreenPixel(&Game->monoFont,  V2(320, 20), 10.0f, RGB(1, 1, 1), "On grid: %i", onGrid);
+	DrawTextScreenPixel(&Game->monoFont,  V2(320, 60), 10.0f, RGB(1, 1, 1), "Grid position: (%i, %i)", gridPosition.x, gridPosition.y);
+	DrawTextScreenPixel(&Game->monoFont,  V2(320, 80), 10.0f, RGB(1, 1, 1), "Mouse position: (%2f, %2f)", mousePosition.x, mousePosition.y);
+	DrawTextScreenPixel(&Game->monoFont, V2(320, 100), 10.0f, RGB(1, 1, 1), "Grid World Position: (%2f, %2f)", gridWorldPosition.x, gridWorldPosition.y);
 }
 
 void MyInit()

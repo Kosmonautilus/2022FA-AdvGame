@@ -1,9 +1,9 @@
 #include "assignment1/entitymanager.cpp"
 #include "assignment1/filereadwrite.cpp"
 
-//Create level tile map of 32 x 16 
+//Create level tile map of 17 x 10 
 //If player moves past coordinate boundary then they are transported to the next level in that direction.
-//Correlates to a 2D vector of levels (8x8? Probably want to be extensible.)
+//Correlates to a 2D vector of levels (9x9? Probably want to be extensible.)
 
 //How do we save our levels? Do we want to read from a file or set it at runtime?
 //Can we map entities based on their position rather than their index?
@@ -87,31 +87,43 @@ void SetGridSize(LevelGrid* grid, float tileSize, uint32 newWidth, uint32 newHei
 	grid->gridOrigin = gridOffset + V2(-grid->gridSize.x * 0.5f, grid->gridSize.y * 0.5f);
 }
 
-vec2i GetGridPosition(LevelGrid* grid, vec2i mousePosition)
+vec2i GetGridPosition(LevelGrid* grid)
 {
-/*	vec2 gOrigin = V2(gridOrigin.x + (Game->screenWidth / 200) * (Game->screenWidth / 16),
-		              (gridOrigin.y + (Game->screenHeight / 200) * (Game->screenHeight / 9))); //unsign, convert to pixel.
-					  */
-	/*
-	vec2 gOrigin = V2(grid->gridOrigin.x + (Game->screenWidth / 200), grid->gridOrigin.y + (Game->screenHeight / 200));
-		 gOrigin = V2(gOrigin.x * (Game->screenWidth / 16), gOrigin.y * (Game->screenHeight / 9));
+	Camera* cam = &Game->camera;
 
-	vec2i gridPosition = V2i((mousePosition.x - gOrigin.x) / grid->gridSize.x, (mousePosition.y - gOrigin.y) / grid->gridSize.y);
-		return gridPosition;
+	vec2 mousePos = Input->mousePosNormSigned;
+	mousePos.x *= cam->width * 0.5f;
+	mousePos.y *= cam->height * 0.5f;
 
-		*/
-	return mousePosition;
+	real32 xDist = mousePos.x - grid->gridOrigin.x;
+	real32 yDist = grid->gridOrigin.y - mousePos.y;
+
+	if (xDist < 0 || yDist < 0)
+	{
+		return V2i(-1,-1);
+	}
+
+	int32 xCoord = xDist / grid->tileSize;
+	int32 yCoord = yDist / grid->tileSize;
+
+	if (xCoord >= grid->gridWidth || yCoord >= grid->gridHeight)
+	{
+		return V2i(-1, -1);
+	}
+
+	return V2i(xCoord, yCoord);
+
 }
 
-void GetGridCenter(vec2 gridPosition)
-{
 
+vec2 GridToWorldPosition(LevelGrid* grid, vec2i gridPosition)
+{
+	vec2 worldPos = grid->gridOrigin;
+	worldPos.x += (grid->tileSize * gridPosition.x) + (grid->tileSize * 0.5f);
+	worldPos.y += (-grid->tileSize * gridPosition.y) + (-grid->tileSize * 0.5f);
+
+	return worldPos;
 }
-
-/*vec2i GridToWorldPosition(LevelGrid* grid)
-{
-	return;
-}*/
 
 void LevelTransition(vec2 ToLevelPosition, vec2 playerPosition)
 {
