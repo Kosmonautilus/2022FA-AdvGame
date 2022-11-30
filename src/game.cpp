@@ -281,8 +281,9 @@ void GameInit(GameMemory *gameMem) {
             "viewProjection",
             "texture0",
             "time",
+            "transparency",
         };
-        CompileShader(&gameMem->texturedQuadShader, 4, uniforms);
+        CompileShader(&gameMem->texturedQuadShader, 5, uniforms);
     }
 
     {

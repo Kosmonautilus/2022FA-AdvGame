@@ -41,3 +41,5 @@
 .vs/game/v17/Browse.VC.db
 .vs/game/v17/.suo
 command_prompt.bat
+*.bat
+config.m_txt

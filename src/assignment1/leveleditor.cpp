@@ -71,11 +71,12 @@ struct MyData
 	PortraitButton UI_Portraits[11];
 
 	PortraitButton UI_ActivePortraits[4];
-	vec2i UI_PortraitPositions[4];
+	vec2 UI_PortraitPositions[4];
 
 	Sprite UI_Number[10];
 	Sprite UI_Hyphen;
 	Sprite UI_EntityCategory[EntityCategory_Count];
+	Sprite UI_SelectBox;
 
 	//Entity Management
 	EntityManager entityManager;
@@ -196,6 +197,8 @@ void InitializeUI()
 	LoadSprite(&editorData->UI_Number[8], "data/ui/UI_Font_8.png");
 	LoadSprite(&editorData->UI_Number[9], "data/ui/UI_Font_9.png");
 	LoadSprite(&editorData->UI_Hyphen, "data/ui/UI_Font_Hyphen.png");
+
+	LoadSprite(&editorData->UI_SelectBox, "data/ui/UI_SelectBox.png");
 
 	LoadSprite(&editorData->UI_EntityCategory[0], "data/ui/UI_Category_Terrain.png");
 	LoadSprite(&editorData->UI_EntityCategory[1], "data/ui/UI_Category_Normans.png");
@@ -332,7 +335,7 @@ void LeftClickPositionCheck()
 		}
 
 		/////////////////////////PORTRAITS//////////////////////////////////////////////////////////////////////////////////////
-		if (mousePosition.x >= 44 && mousePosition.x <= 144 && mousePosition.y >= 632 && mousePosition.y <= 732)
+		if (mousePosition.x >= -7.56f && mousePosition.x <= -6.56f && mousePosition.y >= 1.82f && mousePosition.y <= 2.82f)
 		{
 			editorData->UI_ActivePortraits[0].isActive = true;
 			editorData->UI_ActivePortraits[1].isActive = false;
@@ -340,7 +343,7 @@ void LeftClickPositionCheck()
 			editorData->UI_ActivePortraits[3].isActive = false;
 			//top left portrait
 		}
-		if (mousePosition.x >= 156 && mousePosition.x <= 256 && mousePosition.y >= 632 && mousePosition.y <= 732)
+		if (mousePosition.x >= -6.44f && mousePosition.x <= -5.44f && mousePosition.y >= 1.82f && mousePosition.y <= 2.82f)
 		{
 			editorData->UI_ActivePortraits[0].isActive = false;
 			editorData->UI_ActivePortraits[1].isActive = true;
@@ -348,7 +351,7 @@ void LeftClickPositionCheck()
 			editorData->UI_ActivePortraits[3].isActive = false;
 			//top right portrait
 		}
-		if (mousePosition.x >= 44 && mousePosition.x <= 144 && mousePosition.y >= 516 && mousePosition.y <= 616)
+		if (mousePosition.x >= -7.56f && mousePosition.x <= -6.56f && mousePosition.y >= 0.66f && mousePosition.y <= 1.66f)
 		{
 			editorData->UI_ActivePortraits[0].isActive = false;
 			editorData->UI_ActivePortraits[1].isActive = false;
@@ -356,7 +359,7 @@ void LeftClickPositionCheck()
 			editorData->UI_ActivePortraits[3].isActive = false;
 			//bot left portrait
 		}
-		if (mousePosition.x >= 156 && mousePosition.x <= 256 && mousePosition.y >= 516 && mousePosition.y <= 616)
+		if (mousePosition.x >= -6.44f && mousePosition.x <= -5.44f && mousePosition.y >= 0.66f && mousePosition.y <= 1.66f)
 		{
 			editorData->UI_ActivePortraits[0].isActive = false;
 			editorData->UI_ActivePortraits[1].isActive = false;
@@ -532,7 +535,7 @@ void DrawUI()
 	//SCALE IS IN 50(PIXEL?)
 	//DrawSprite(V2(-6.5f,0), V2(1.5, 4.5), &editorData->UI_Background);
 
-	DrawSpritePixel(V2i(150, 450), V2i(75, 225), &editorData->UI_Background);
+	DrawSprite(V2(-6.5f, 0.0f), V2(1.5, 4.5), 1, &editorData->UI_Background);
 
 	DrawSprite(V2(-6.52f, 3.11f), V2(0.54f, 0.1f), &editorData->UI_EntityCategory[currentEntityCategory]);
 	
@@ -681,11 +684,49 @@ void DrawUI()
 	DrawSprite(V2(-6.22f, -2.06f), V2(0.1, 0.2),    &editorData->UI_Number[(uint8)currentLevel.y]);
 	DrawSprite(V2(-6.5f, -2.06f), V2(0.1, 0.2),     &editorData->UI_Hyphen);
 
-	
-	DrawSpritePixel(editorData->UI_PortraitPositions[0], V2i(23, 23), &editorData->UI_ActivePortraits[0].activeSprite);
-	DrawSpritePixel(editorData->UI_PortraitPositions[1], V2i(23, 23), &editorData->UI_ActivePortraits[1].activeSprite);
-	DrawSpritePixel(editorData->UI_PortraitPositions[2], V2i(23, 23), &editorData->UI_ActivePortraits[2].activeSprite);
-	DrawSpritePixel(editorData->UI_PortraitPositions[3], V2i(23, 23), &editorData->UI_ActivePortraits[3].activeSprite);
+
+	if (editorData->UI_ActivePortraits[0].isActive)
+	{
+		DrawSprite(editorData->UI_PortraitPositions[0], V2(0.5f, 0.5f), &editorData->UI_ActivePortraits[0].activeSprite);
+		DrawSprite(editorData->UI_PortraitPositions[0], V2(0.5f, 0.5f), &editorData->UI_SelectBox);
+	}
+	else
+	{
+		DrawSprite(editorData->UI_PortraitPositions[0], V2(0.5f, 0.5f), &editorData->UI_ActivePortraits[0].activeSprite);
+	}
+
+	if (editorData->UI_ActivePortraits[1].isActive)
+	{
+		DrawSprite(editorData->UI_PortraitPositions[1], V2(0.5f, 0.5f), &editorData->UI_ActivePortraits[1].activeSprite);
+		DrawSprite(editorData->UI_PortraitPositions[1], V2(0.5f, 0.5f), &editorData->UI_SelectBox);
+	}
+	else
+	{
+		DrawSprite(editorData->UI_PortraitPositions[1], V2(0.5f, 0.5f), &editorData->UI_ActivePortraits[1].activeSprite);
+	}
+
+
+	if (editorData->UI_ActivePortraits[2].isActive)
+	{
+		DrawSprite(editorData->UI_PortraitPositions[2], V2(0.5f, 0.5f), &editorData->UI_ActivePortraits[2].activeSprite);
+		DrawSprite(editorData->UI_PortraitPositions[2], V2(0.5f, 0.5f), &editorData->UI_SelectBox);
+	}
+	else
+	{
+		DrawSprite(editorData->UI_PortraitPositions[2], V2(0.5f, 0.5f), &editorData->UI_ActivePortraits[2].activeSprite);
+	}
+
+
+	if (editorData->UI_ActivePortraits[3].isActive)
+	{
+		DrawSprite(editorData->UI_PortraitPositions[3], V2(0.5f, 0.5f), &editorData->UI_ActivePortraits[3].activeSprite);
+		DrawSprite(editorData->UI_PortraitPositions[3], V2(0.5f, 0.5f), &editorData->UI_SelectBox);
+	}
+	else
+	{
+		DrawSprite(editorData->UI_PortraitPositions[3], V2(0.5f, 0.5f), &editorData->UI_ActivePortraits[3].activeSprite);
+	}
+
 
 	if (editorData->UI_UpButton[0].isActive && editorData->UI_UpButton[0].timeSincePress >= 0.1f)
 	{
@@ -760,10 +801,17 @@ void RenderPhase()
 {
 	DrawUI();
 	
+	/*
 	DrawTextScreenPixel(&Game->monoFont,  V2(320, 20), 10.0f, RGB(1, 1, 1), "On grid: %i", onGrid);
 	DrawTextScreenPixel(&Game->monoFont,  V2(320, 60), 10.0f, RGB(1, 1, 1), "Grid position: (%i, %i)", gridPosition.x, gridPosition.y);
-	DrawTextScreenPixel(&Game->monoFont,  V2(320, 80), 10.0f, RGB(1, 1, 1), "Mouse position: (%2f, %2f)", mousePosition.x, mousePosition.y);
+	DrawTextScreenPixel(&Game->monoFont,  V2(320, 80), 10.0f, RGB(1, 1, 1), "Mouse position: (%.2f, %.2f)", mousePosition.x, mousePosition.y);
 	DrawTextScreenPixel(&Game->monoFont, V2(320, 100), 10.0f, RGB(1, 1, 1), "Grid World Position: (%2f, %2f)", gridWorldPosition.x, gridWorldPosition.y);
+	*/
+
+	DrawTextScreen(&Game->monoFont, V2(0.19375f,0.02f), 0.00625f, RGB(1, 1, 1), "On grid: %i", onGrid);
+	DrawTextScreen(&Game->monoFont, V2(0.19375f, 0.04f), 0.00625f, RGB(1, 1, 1), "Grid position: (%i, %i)", gridPosition.x, gridPosition.y);
+	DrawTextScreen(&Game->monoFont, V2(0.19375f, 0.06f), 0.00625f, RGB(1, 1, 1), "Mouse position: (%.3f, %.3f)", mousePosition.x, mousePosition.y);
+	DrawTextScreen(&Game->monoFont, V2(0.19375f, 0.08f), 0.00625f, RGB(1, 1, 1), "Grid world position: (%.3f, %.3f)", gridWorldPosition.x, gridWorldPosition.y);
 }
 
 void MyInit()
@@ -775,10 +823,10 @@ void MyInit()
 
 	SetGridSize(&editorData->levelGrid,0.75f, 17, 10, V2(1.5f,-0.75f)); //shifted right for now, in game the x axis will be centered.
 
-	editorData->UI_PortraitPositions[0] = V2i(94, 682);
-	editorData->UI_PortraitPositions[1] = V2i(206, 682);
-	editorData->UI_PortraitPositions[2] = V2i(94, 566);
-	editorData->UI_PortraitPositions[3] = V2i(206, 566);
+	editorData->UI_PortraitPositions[0] = V2(-7.06f, 2.32f);
+	editorData->UI_PortraitPositions[1] = V2(-5.94f, 2.32f);
+	editorData->UI_PortraitPositions[2] = V2(-7.06f, 1.16f);
+	editorData->UI_PortraitPositions[3] = V2(-5.94f, 1.16f);
 
 	InitializeUI();
 

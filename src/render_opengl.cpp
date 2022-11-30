@@ -290,7 +290,7 @@ void InitGlyphBuffers(int32 count) {
     }
 }
 
-void DrawSprite(vec2 position, vec2 scale, real32 angle, Sprite *texture) {
+void DrawSprite(vec2 position, vec2 scale, real32 angle, real32 transparency, Sprite *texture) {
     Shader *shader = &Game->texturedQuadShader;
     SetShader(shader);
 
@@ -313,6 +313,8 @@ void DrawSprite(vec2 position, vec2 scale, real32 angle, Sprite *texture) {
     glUniform1i(shader->uniforms[2].id, 0);
 
     glUniform1fv(shader->uniforms[3].id, 1, &Game->time);
+    
+    glUniform1fv(shader->uniforms[4].id, 1, &transparency);
 
     glBindBuffer(GL_ARRAY_BUFFER, mesh->vertBufferID);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indexBufferID);
@@ -333,8 +335,12 @@ void DrawSprite(vec2 position, vec2 scale, real32 angle, Sprite *texture) {
     glDisableVertexAttribArray(texcoord);    
 }
 
+void DrawSprite(vec2 position, vec2 scale, real32 transparency, Sprite* texture) {
+    DrawSprite(position, scale, 0.0f, transparency, texture);
+}
+
 void DrawSprite(vec2 position, vec2 scale, Sprite *texture) {
-    DrawSprite(position, scale, 0.0f, texture);
+    DrawSprite(position, scale, 0.0f, 1, texture);
 }
 
 void DrawSpritePixel(vec2i position, vec2i scale, Sprite* texture)
@@ -344,7 +350,7 @@ void DrawSpritePixel(vec2i position, vec2i scale, Sprite* texture)
 
     vec2 scale_ = V2(scale.x * 0.02f,scale.y * 0.02f);
 
-    DrawSprite(pos_, scale_, 0.0f, texture);
+    DrawSprite(pos_, scale_, 0.0f, 1, texture);
 }
 
 

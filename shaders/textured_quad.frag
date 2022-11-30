@@ -5,6 +5,7 @@ in vec2 texcoord;
 
 uniform sampler2D texture0;
 uniform float time;
+uniform float transparency; 
 
 out vec4 color;
 
@@ -56,6 +57,8 @@ void main() {
     
     vec4 textureContrib = texture(texture0, uv).rgba;
     
+    textureContrib.a *= transparency;
+
     color.rgba = textureContrib;
 
     //color.rgb = vec3((1 + d) / 2);
