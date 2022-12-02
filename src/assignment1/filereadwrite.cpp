@@ -111,7 +111,7 @@ void ReadLevel(EntityManager* em, char* filePath)
 					{
 						EntityHandle footmanHandle = AddEntity(em, EntityType_Footman);
 						EntityInfo* info = &em->entities[footmanHandle.id];
-						Footman* f = (Footman*)&buffer[info->indexInBuffer];
+						LivingEntity* f = (LivingEntity*)&buffer[info->indexInBuffer];
 						tokenIndex++;
 
 						for (int i = 0; i < 2; i++) //set position

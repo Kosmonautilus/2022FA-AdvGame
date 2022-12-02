@@ -18,7 +18,9 @@ enum GameMode
 
 enum EntityCategory
 {
-	EntityCategory_Terrain,
+	EntityCategory_Walls,
+	EntityCategory_Floors,
+	EntityCategory_Blockers,
 	EntityCategory_Normans,
 	EntityCategory_Items,
 	EntityCategory_Count
@@ -68,7 +70,7 @@ struct MyData
 	EditorButton UI_ClearButton;
 	EditorButton UI_PlayButton;
 
-	PortraitButton UI_Portraits[11];
+	PortraitButton UI_Portraits[EntityType_Count];
 
 	PortraitButton UI_ActivePortraits[4];
 	vec2 UI_PortraitPositions[4];
@@ -78,8 +80,12 @@ struct MyData
 	Sprite UI_EntityCategory[EntityCategory_Count];
 	Sprite UI_SelectBox;
 
+	Sprite staticEntitySprites[EntityType_Footman * 10];
+
 	//Entity Management
 	EntityManager entityManager;
+
+	EntityType selectedEntityType;
 
 	LevelGrid levelGrid;
 };
@@ -95,7 +101,6 @@ bool onGrid;
 vec2i gridPosition;
 vec2 gridWorldPosition;
 
-EntityType selectedEntityType;
 vec2 placeEntityDirection;
 EntityCategory currentEntityCategory;
 
@@ -104,6 +109,44 @@ vec2 currentLevel;
 
 EntityHandle selectedEntities[1000];
 int32 selectedEntitiesCount;
+
+
+
+void LoadStaticEntitySprites()
+{
+	/*
+	for (int i = 0; i < 10; i++)
+	{
+		LoadSprite(&editorData->entitySprites[0 + i],  "data/sprites/tiles/Wall_Rock_" + (i + 1) + ".png");
+		LoadSprite(&editorData->entitySprites[10 + i], "data/sprites/tiles/Wall_Wood_" + (i + 1) + ".png");
+		LoadSprite(&editorData->entitySprites[20 + i], "data/sprites/tiles/Wall_Cobble_" + (i + 1) + ".png");
+		LoadSprite(&editorData->entitySprites[30 + i], "data/sprites/tiles/Wall_Bush_" + (i + 1) + ".png");
+
+		LoadSprite(&editorData->entitySprites[40 + i], "data/sprites/tiles/Floor_Dirt_" + (i + 1) + ".png");
+		LoadSprite(&editorData->entitySprites[50 + i], "data/sprites/tiles/Floor_Grass_" + (i + 1) + ".png");
+		LoadSprite(&editorData->entitySprites[60 + i], "data/sprites/tiles/Floor_Cobble_" + (i + 1) + ".png");
+		LoadSprite(&editorData->entitySprites[70 + i], "data/sprites/tiles/Floor_Wood_" + (i + 1) + ".png");
+
+		//Need to figure this out. How to index items? Do we leave the index null?
+		LoadSprite(&editorData->entitySprites[80 + i], "data/sprites/items/Item_" + (i + 1) + ".png");
+		LoadSprite(&editorData->entitySprites[90 + i], "data/sprites/items/Item_" + (i + 1) + ".png");
+		LoadSprite(&editorData->entitySprites[100 + i], "data/sprites/items/Item_" + (i + 1) + ".png");
+		LoadSprite(&editorData->entitySprites[110 + i], "data/sprites/items/Item_" + (i + 1) + ".png");
+
+		LoadSprite(&editorData->entitySprites[120 + i], "data/sprites/tiles/Floor_Water_" + (i + 1) + ".png");
+		LoadSprite(&editorData->entitySprites[130 + i], "data/sprites/tiles/Object_Decor_" + (i + 1) + ".png");
+		LoadSprite(&editorData->entitySprites[140 + i], "data/sprites/tiles/Object_Boulder_" + (i + 1) + ".png");
+		LoadSprite(&editorData->entitySprites[150 + i], "data/sprites/tiles/Object_Door_" + (i + 1) + ".png");
+	}
+	*/
+
+
+	LoadSprite(&editorData->staticEntitySprites[40], "data/sprites/tiles/floor/Floor_Dirt.png");
+	LoadSprite(&editorData->staticEntitySprites[50], "data/sprites/tiles/floor/Floor_Grass.png");
+	LoadSprite(&editorData->staticEntitySprites[60], "data/sprites/tiles/floor/Floor_Cobble.png");
+	LoadSprite(&editorData->staticEntitySprites[70], "data/sprites/tiles/floor/Floor_Wood.png");
+
+}
 
 void InitializeUI()
 {
@@ -200,27 +243,40 @@ void InitializeUI()
 
 	LoadSprite(&editorData->UI_SelectBox, "data/ui/UI_SelectBox.png");
 
-	LoadSprite(&editorData->UI_EntityCategory[0], "data/ui/UI_Category_Terrain.png");
-	LoadSprite(&editorData->UI_EntityCategory[1], "data/ui/UI_Category_Normans.png");
-	LoadSprite(&editorData->UI_EntityCategory[2], "data/ui/UI_Category_Items.png");
+	LoadSprite(&editorData->UI_EntityCategory[0], "data/ui/UI_Category_Walls.png");
+	LoadSprite(&editorData->UI_EntityCategory[1], "data/ui/UI_Category_Floors.png");
+	LoadSprite(&editorData->UI_EntityCategory[2], "data/ui/UI_Category_Blockers.png");
+	LoadSprite(&editorData->UI_EntityCategory[3], "data/ui/UI_Category_Normans.png");
+	LoadSprite(&editorData->UI_EntityCategory[4], "data/ui/UI_Category_Items.png");
 
   //LoadSprite(&editorData->UI_Portraits[0].activeSprite,  "data/ui/UI_Portrait_Wall.png");
   //LoadSprite(&editorData->UI_Portraits[1].activeSprite,  "data/ui/UI_Portrait_Water.png");
   //LoadSprite(&editorData->UI_Portraits[2].activeSprite,  "data/ui/UI_Portrait_Tree.png");
   //LoadSprite(&editorData->UI_Portraits[3].activeSprite,  "data/ui/UI_Portrait_Rock.png");
+
+	//Initialize floors
+
+	LoadSprite(&editorData->UI_Portraits[4].activeSprite, "data/sprites/tiles/floor/Floor_Dirt.png");
+	editorData->UI_Portraits[4].portraitEntity = EntityType_Floor_Dirt;
+	LoadSprite(&editorData->UI_Portraits[5].activeSprite, "data/sprites/tiles/floor/Floor_Grass.png");
+	editorData->UI_Portraits[5].portraitEntity = EntityType_Floor_Grass;
+	LoadSprite(&editorData->UI_Portraits[6].activeSprite, "data/sprites/tiles/floor/Floor_Cobble.png");
+	editorData->UI_Portraits[6].portraitEntity = EntityType_Floor_Cobble;
+	LoadSprite(&editorData->UI_Portraits[7].activeSprite, "data/sprites/tiles/floor/Floor_Wood.png");
+	editorData->UI_Portraits[7].portraitEntity = EntityType_Floor_Wood;
   
   //Initialize Normans
-    LoadSprite(&editorData->UI_Portraits[4].activeSprite,  "data/ui/UI_Portrait_Footman.png");
-	editorData->UI_Portraits[4].portraitEntity = EntityType_Footman;
+    LoadSprite(&editorData->UI_Portraits[16].activeSprite,  "data/ui/UI_Portrait_Footman.png");
+	editorData->UI_Portraits[16].portraitEntity = EntityType_Footman;
 
-	LoadSprite(&editorData->UI_Portraits[5].activeSprite,  "data/ui/UI_Portrait_Crossbowman.png");
-	editorData->UI_Portraits[5].portraitEntity = EntityType_Crossbowman;
+	LoadSprite(&editorData->UI_Portraits[17].activeSprite,  "data/ui/UI_Portrait_Crossbowman.png");
+	editorData->UI_Portraits[17].portraitEntity = EntityType_Crossbowman;
 
-	LoadSprite(&editorData->UI_Portraits[6].activeSprite,  "data/ui/UI_Portrait_Knight.png");
-	editorData->UI_Portraits[6].portraitEntity = EntityType_Knight;
+	LoadSprite(&editorData->UI_Portraits[18].activeSprite,  "data/ui/UI_Portrait_Knight.png");
+	editorData->UI_Portraits[18].portraitEntity = EntityType_Knight;
 
-    LoadSprite(&editorData->UI_Portraits[7].activeSprite,  "data/ui/UI_Portrait_Wizard.png");
-    editorData->UI_Portraits[7].portraitEntity = EntityType_Wizard; 
+    LoadSprite(&editorData->UI_Portraits[19].activeSprite,  "data/ui/UI_Portrait_Wizard.png");
+    editorData->UI_Portraits[19].portraitEntity = EntityType_Wizard; 
   
   //LoadSprite(&editorData->UI_Portraits[8].activeSprite,  "data/ui/UI_Portrait_Chicken.png");
   //LoadSprite(&editorData->UI_Portraits[9].activeSprite,  "data/ui/UI_Portrait_Potion.png");
@@ -235,25 +291,34 @@ void InitializeUI()
 	
 }
 
-void PlaceEntity(vec2 gridPosition, EntityType type)
+
+void PlaceEntity(vec2 position, EntityManager* em, EntityType type)
 {
+	EntityTypeBuffer* buffer = &em->buffers[type];
+
+
 	if (onGrid == false)
 	{
-		return;
+		
+	}
+	else if (buffer->count >= buffer->capacity)
+	{
+		
+	}
+	else if (IsEntityTypeAtLocation(em, type, position) == true)
+	{
+
 	}
 	else
 	{
-		EntityHandle entityHandle = AddEntity(&editorData->entityManager, selectedEntityType);
+		EntityHandle entityHandle = AddEntity(&editorData->entityManager, type);
 		Entity* e = (Entity*)GetEntity(&editorData->entityManager, entityHandle);
-		e->position.x = gridPosition.x;
-		e->position.y = gridPosition.y;
+		e->position.x = position.x;
+		e->position.y = position.y;
+		e->sprite = editorData->staticEntitySprites[(int)type * 10];
 	}
 }
 
-void RemoveEntity(vec2 cursorPosition)
-{
-
-}
 
 void LoadLevel(char* path)
 {
@@ -265,33 +330,42 @@ void SaveLevel()
 
 }
 
-void NewLevel()
-{
-
-}
-
 void UpdateCategory()
 {
-	if (currentEntityCategory == EntityCategory_Terrain)
+	if (currentEntityCategory == EntityCategory_Walls)
 	{
 		editorData->UI_ActivePortraits[0] = editorData->UI_Portraits[0];
 		editorData->UI_ActivePortraits[1] = editorData->UI_Portraits[1];
 		editorData->UI_ActivePortraits[2] = editorData->UI_Portraits[2];
 		editorData->UI_ActivePortraits[3] = editorData->UI_Portraits[3];
 	}
-	else if (currentEntityCategory == EntityCategory_Normans)
+	else if (currentEntityCategory == EntityCategory_Floors)
 	{
 		editorData->UI_ActivePortraits[0] = editorData->UI_Portraits[4];
 		editorData->UI_ActivePortraits[1] = editorData->UI_Portraits[5];
 		editorData->UI_ActivePortraits[2] = editorData->UI_Portraits[6];
 		editorData->UI_ActivePortraits[3] = editorData->UI_Portraits[7];
 	}
-	else if (currentEntityCategory == EntityCategory_Items)
+	else if (currentEntityCategory == EntityCategory_Blockers)
 	{
 		editorData->UI_ActivePortraits[0] = editorData->UI_Portraits[8];
 		editorData->UI_ActivePortraits[1] = editorData->UI_Portraits[9];
 		editorData->UI_ActivePortraits[2] = editorData->UI_Portraits[10];
 		editorData->UI_ActivePortraits[3] = editorData->UI_Portraits[11];
+	}
+	else if (currentEntityCategory == EntityCategory_Items)
+	{
+		editorData->UI_ActivePortraits[0] = editorData->UI_Portraits[12];
+		editorData->UI_ActivePortraits[1] = editorData->UI_Portraits[13];
+		editorData->UI_ActivePortraits[2] = editorData->UI_Portraits[14];
+		editorData->UI_ActivePortraits[3] = editorData->UI_Portraits[15];
+	}
+	else if (currentEntityCategory == EntityCategory_Normans)
+	{
+		editorData->UI_ActivePortraits[0] = editorData->UI_Portraits[16];
+		editorData->UI_ActivePortraits[1] = editorData->UI_Portraits[17];
+		editorData->UI_ActivePortraits[2] = editorData->UI_Portraits[18];
+		editorData->UI_ActivePortraits[3] = editorData->UI_Portraits[19];
 	}
 }
 
@@ -341,6 +415,8 @@ void LeftClickPositionCheck()
 			editorData->UI_ActivePortraits[1].isActive = false;
 			editorData->UI_ActivePortraits[2].isActive = false;
 			editorData->UI_ActivePortraits[3].isActive = false;
+
+			editorData->selectedEntityType = editorData->UI_ActivePortraits[0].portraitEntity;
 			//top left portrait
 		}
 		if (mousePosition.x >= -6.44f && mousePosition.x <= -5.44f && mousePosition.y >= 1.82f && mousePosition.y <= 2.82f)
@@ -349,6 +425,8 @@ void LeftClickPositionCheck()
 			editorData->UI_ActivePortraits[1].isActive = true;
 			editorData->UI_ActivePortraits[2].isActive = false;
 			editorData->UI_ActivePortraits[3].isActive = false;
+
+			editorData->selectedEntityType = editorData->UI_ActivePortraits[1].portraitEntity;
 			//top right portrait
 		}
 		if (mousePosition.x >= -7.56f && mousePosition.x <= -6.56f && mousePosition.y >= 0.66f && mousePosition.y <= 1.66f)
@@ -357,6 +435,8 @@ void LeftClickPositionCheck()
 			editorData->UI_ActivePortraits[1].isActive = false;
 			editorData->UI_ActivePortraits[2].isActive = true;
 			editorData->UI_ActivePortraits[3].isActive = false;
+
+			editorData->selectedEntityType = editorData->UI_ActivePortraits[2].portraitEntity;
 			//bot left portrait
 		}
 		if (mousePosition.x >= -6.44f && mousePosition.x <= -5.44f && mousePosition.y >= 0.66f && mousePosition.y <= 1.66f)
@@ -365,8 +445,12 @@ void LeftClickPositionCheck()
 			editorData->UI_ActivePortraits[1].isActive = false;
 			editorData->UI_ActivePortraits[2].isActive = false;
 			editorData->UI_ActivePortraits[3].isActive = true;
+
+			editorData->selectedEntityType = editorData->UI_ActivePortraits[3].portraitEntity;
 			//bot right portrait
 		}
+
+		/////////////////////////LEVEL INCREMENTER//////////////////////////////////////////////////////////////////////////////
 
 		if (RectPointTest(mousePosition, editorData->UI_UpButton[0].position)) //INCREMENT CURRENT LEVEL X UP
 		{
@@ -417,6 +501,9 @@ void LeftClickPositionCheck()
 				currentLevel.y--;
 			}
 		}
+
+		/////////////////////////DRAW MODES////////////////////////////////////////////////////////////////////////////
+
 		if (RectPointTest(mousePosition, editorData->UI_DrawMode_SelectButton.position))
 		{
 			drawMode = DrawMode_Select;
@@ -451,6 +538,8 @@ void LeftClickPositionCheck()
 			editorData->UI_DrawMode_MultiButton.isActive = true;
 		}
 
+		/////////////////////////SAVE LOAD CLEAR BUTTONS///////////////////////////////////////////////////////////
+
 		if (RectPointTest(mousePosition, editorData->UI_SaveButton.position))
 		{
 			editorData->UI_SaveButton.isActive = true;
@@ -464,6 +553,7 @@ void LeftClickPositionCheck()
 		if (RectPointTest(mousePosition, editorData->UI_ClearButton.position))
 		{
 			editorData->UI_ClearButton.isActive = true;
+			ClearAllBuffers(&editorData->entityManager);
 		}
 
 		if (RectPointTest(mousePosition, editorData->UI_PlayButton.position))
@@ -474,17 +564,23 @@ void LeftClickPositionCheck()
 	}
 	else if (onGrid)
 	{
-		switch (drawMode)
+		if (drawMode == DrawMode_Select)
 		{
-			case DrawMode_Select:
-				break;
-			case DrawMode_Delete:
-				break;
-			case DrawMode_Single:
-				break;
-			case DrawMode_Multi:
-				break;
+
 		}
+		else if (drawMode == DrawMode_Delete)
+		{
+			RemoveEntityAtPosition(&editorData->entityManager, gridWorldPosition);
+		}
+		else if (drawMode == DrawMode_Single)
+		{
+			PlaceEntity(gridWorldPosition, &editorData->entityManager, editorData->selectedEntityType);
+		}
+		else if (drawMode == DrawMode_Multi)
+		{
+
+		}
+
 	}
 }
 
@@ -523,6 +619,18 @@ void InputLogic()
 		onGrid = false;
 	}
 
+	if (InputPressed(Keyboard, Input_G))
+	{
+		if (editorData->levelGrid.toggleGrid)
+		{
+			editorData->levelGrid.toggleGrid = false;
+		}
+		else
+		{
+			editorData->levelGrid.toggleGrid = true;
+		}
+	}
+
 	if (InputPressed(Mouse, Input_MouseLeft))
 	{
 		LeftClickPositionCheck();
@@ -530,16 +638,9 @@ void InputLogic()
 	UpdateGridPosition();
 }
 
-void DrawUI()
+void UIActiveButtons()
 {
-	//SCALE IS IN 50(PIXEL?)
-	//DrawSprite(V2(-6.5f,0), V2(1.5, 4.5), &editorData->UI_Background);
-
-	DrawSprite(V2(-6.5f, 0.0f), V2(1.5, 4.5), 1, &editorData->UI_Background);
-
-	DrawSprite(V2(-6.52f, 3.11f), V2(0.54f, 0.1f), &editorData->UI_EntityCategory[currentEntityCategory]);
-	
-	if (editorData->UI_LeftButton.isActive && editorData->UI_LeftButton.timeSincePress < 0.1f)           
+	if (editorData->UI_LeftButton.isActive && editorData->UI_LeftButton.timeSincePress < 0.1f)
 	{
 		DrawSprite(V2(-7.42f, 3.12f), V2(0.1, 0.14), &editorData->UI_LeftButton.clickedSprite);
 		editorData->UI_LeftButton.timeSincePress += 1 * DeltaTime;
@@ -560,7 +661,7 @@ void DrawUI()
 	}
 
 
-	if (editorData->UI_DrawMode_SelectButton.isActive )
+	if (editorData->UI_DrawMode_SelectButton.isActive)
 	{
 		DrawSprite(V2(-6.8f, -0.26f), V2(0.2, 0.2), &editorData->UI_DrawMode_SelectButton.clickedSprite);
 	}
@@ -677,13 +778,20 @@ void DrawUI()
 	{
 		DrawSprite(V2(-6.5f, -4.08f), V2(0.74, 0.3), &editorData->UI_PlayButton.buttonSprite);
 	}
+}
 
+void DrawUI()
+{
+	//SCALE IS IN 50(PIXEL?)
+	//DrawSprite(V2(-6.5f,0), V2(1.5, 4.5), &editorData->UI_Background);
 
+	DrawSprite(V2(-6.5f, 0.0f), V2(1.5, 4.5), &editorData->UI_Background);
 
-	DrawSprite(V2(-6.78f, -2.06f), V2(0.1, 0.2),    &editorData->UI_Number[(uint8)currentLevel.x]);
-	DrawSprite(V2(-6.22f, -2.06f), V2(0.1, 0.2),    &editorData->UI_Number[(uint8)currentLevel.y]);
-	DrawSprite(V2(-6.5f, -2.06f), V2(0.1, 0.2),     &editorData->UI_Hyphen);
+	DrawSprite(V2(-6.52f, 3.11f), V2(0.54f, 0.1f), &editorData->UI_EntityCategory[currentEntityCategory]);
+	
+	UIActiveButtons();
 
+	/////////////////////////PORTRAIT BUTTONS/////////////////////////////////////////////////////////////////////////////
 
 	if (editorData->UI_ActivePortraits[0].isActive)
 	{
@@ -727,6 +835,7 @@ void DrawUI()
 		DrawSprite(editorData->UI_PortraitPositions[3], V2(0.5f, 0.5f), &editorData->UI_ActivePortraits[3].activeSprite);
 	}
 
+	/////////////////////////LEVEL INCREMENTER BUTTONS///////////////////////////////////////////////////////////////////////////
 
 	if (editorData->UI_UpButton[0].isActive && editorData->UI_UpButton[0].timeSincePress >= 0.1f)
 	{
@@ -752,6 +861,13 @@ void DrawUI()
 		editorData->UI_DownButton[1].timeSincePress = 0.0f;
 	}
 
+	DrawSprite(V2(-6.78f, -2.06f), V2(0.1, 0.2), &editorData->UI_Number[(uint8)currentLevel.x]);
+	DrawSprite(V2(-6.22f, -2.06f), V2(0.1, 0.2), &editorData->UI_Number[(uint8)currentLevel.y]);
+	DrawSprite(V2(-6.5f, -2.06f), V2(0.1, 0.2), &editorData->UI_Hyphen);
+
+
+	/////////////////////////CATEGORY INCREMENTER BUTTONS///////////////////////////////////////////////////////////////////////////
+
 	if (editorData->UI_LeftButton.isActive && editorData->UI_LeftButton.timeSincePress >= 0.1f)
 	{
 		editorData->UI_LeftButton.isActive = false;
@@ -763,6 +879,8 @@ void DrawUI()
 		editorData->UI_RightButton.isActive = false;
 		editorData->UI_RightButton.timeSincePress = 0.0f;
 	}
+
+	/////////////////////////SAVE LOAD CLEAR PLAY///////////////////////////////////////////////////////////////////////////
 
 	if (editorData->UI_SaveButton.isActive && editorData->UI_SaveButton.timeSincePress >= 0.1f)
 	{
@@ -788,30 +906,69 @@ void DrawUI()
 		editorData->UI_PlayButton.timeSincePress = 0.0f;
 	}
 	
+	/////////////////////////DEBUG TEXT///////////////////////////////////////////////////////////////////////////
+
+	DrawTextScreen(&Game->monoFont, V2(0.19375f, 0.02f), 0.00625f, RGB(1, 1, 1), "On grid: %i", onGrid);
+	DrawTextScreen(&Game->monoFont, V2(0.19375f, 0.04f), 0.00625f, RGB(1, 1, 1), "Grid position: (%i, %i)", gridPosition.x, gridPosition.y);
+	DrawTextScreen(&Game->monoFont, V2(0.19375f, 0.06f), 0.00625f, RGB(1, 1, 1), "Mouse position: (%.3f, %.3f)", mousePosition.x, mousePosition.y);
+	DrawTextScreen(&Game->monoFont, V2(0.19375f, 0.08f), 0.00625f, RGB(1, 1, 1), "Grid world position: (%.3f, %.3f)", gridWorldPosition.x, gridWorldPosition.y);
+	DrawTextScreen(&Game->monoFont, V2(0.19375f, 0.08f), 0.00625f, RGB(1, 1, 1), "Grid world position: (%.3f, %.3f)", gridWorldPosition.x, gridWorldPosition.y);
+	DrawTextScreen(&Game->monoFont, V2(0.5f, 0.02f), 0.00625f, RGB(1, 1, 1), "Press G to toggle grid.");
+	DrawTextScreen(&Game->monoFont, V2(0.5f, 0.04f), 0.00625f, RGB(1, 1, 1), "Toggle grid state: %i", editorData->levelGrid.toggleGrid);
+
 }
 
+void DrawEntityType(EntityManager* em, EntityType type) //ONLY USE WITH ENTITIES THAT HAVE NO ANIMATION
+{
+	EntityTypeBuffer* buffer = &em->buffers[type];
 
+	for (int i = 0; i < buffer->count; i++)
+	{
+		Entity* e = (Entity*)((u8*)buffer->entities + (buffer->entitySizeInBytes * i));
+
+		DrawSprite(e->position, V2(0.5 * editorData->levelGrid.tileSize, 0.5 * editorData->levelGrid.tileSize), &e->sprite);
+	}
+}
+
+void DrawStaticEntities()
+{
+	DrawEntityType(&editorData->entityManager, (EntityType)4);
+	DrawEntityType(&editorData->entityManager, (EntityType)5);
+	DrawEntityType(&editorData->entityManager, (EntityType)6);
+	DrawEntityType(&editorData->entityManager, (EntityType)7);
+}
+
+void DrawLivingEntities()
+{
+
+}
+
+void DrawSprites()
+{
+	DrawStaticEntities();
+	DrawLivingEntities();
+}
 
 void LogicPhase()
 {
 	InputLogic();
+	if (entityDeleteCount > 0)
+	{
+		DeleteEntities(&editorData->entityManager);
+	}
+
 }
 
 void RenderPhase()
 {
 	DrawUI();
-	
-	/*
-	DrawTextScreenPixel(&Game->monoFont,  V2(320, 20), 10.0f, RGB(1, 1, 1), "On grid: %i", onGrid);
-	DrawTextScreenPixel(&Game->monoFont,  V2(320, 60), 10.0f, RGB(1, 1, 1), "Grid position: (%i, %i)", gridPosition.x, gridPosition.y);
-	DrawTextScreenPixel(&Game->monoFont,  V2(320, 80), 10.0f, RGB(1, 1, 1), "Mouse position: (%.2f, %.2f)", mousePosition.x, mousePosition.y);
-	DrawTextScreenPixel(&Game->monoFont, V2(320, 100), 10.0f, RGB(1, 1, 1), "Grid World Position: (%2f, %2f)", gridWorldPosition.x, gridWorldPosition.y);
-	*/
+	DrawSprites();
 
-	DrawTextScreen(&Game->monoFont, V2(0.19375f,0.02f), 0.00625f, RGB(1, 1, 1), "On grid: %i", onGrid);
-	DrawTextScreen(&Game->monoFont, V2(0.19375f, 0.04f), 0.00625f, RGB(1, 1, 1), "Grid position: (%i, %i)", gridPosition.x, gridPosition.y);
-	DrawTextScreen(&Game->monoFont, V2(0.19375f, 0.06f), 0.00625f, RGB(1, 1, 1), "Mouse position: (%.3f, %.3f)", mousePosition.x, mousePosition.y);
-	DrawTextScreen(&Game->monoFont, V2(0.19375f, 0.08f), 0.00625f, RGB(1, 1, 1), "Grid world position: (%.3f, %.3f)", gridWorldPosition.x, gridWorldPosition.y);
+	if (drawMode == DrawMode_Single)
+	{
+		DrawSprite(gridWorldPosition, V2(0.375f, 0.375f), 0.6f, &editorData->staticEntitySprites[(int)editorData->selectedEntityType * 10]);
+	}
+
 }
 
 void MyInit()
@@ -821,18 +978,49 @@ void MyInit()
 
 	editorData = (MyData*)Game->myData;
 
-	SetGridSize(&editorData->levelGrid,0.75f, 17, 10, V2(1.5f,-0.75f)); //shifted right for now, in game the x axis will be centered.
+	//INITIALIZE ENTITY MANAGER AND BUFFERS
+	EntityManagerInit(&editorData->entityManager);
+
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Wall_Rock,    170, sizeof(Entity));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Wall_Wood,    170, sizeof(Entity));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Wall_Cobble,  170, sizeof(Entity));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Wall_Bush,    170, sizeof(Entity));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Floor_Dirt,   170, sizeof(Entity));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Floor_Grass,  170, sizeof(Entity));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Floor_Cobble, 170, sizeof(Entity));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Floor_Wood,   170, sizeof(Entity));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Chicken,      170, sizeof(Entity));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Potion,       170, sizeof(Entity));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Bomb,         170, sizeof(Entity));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Key,          170, sizeof(Entity));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Water,        170, sizeof(Entity));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Decor,        170, sizeof(Entity));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Boulder,      170, sizeof(Boulder));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Door,         170, sizeof(Door));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Footman,      170, sizeof(LivingEntity));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Crossbowman,  170, sizeof(Crossbowman));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Knight,       170, sizeof(LivingEntity));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Wizard,       170, sizeof(Wizard));
+	InitializeEntityBuffer(&editorData->entityManager, EntityType_Player,       1, sizeof(Player));
+
+	SetGridSize(&editorData->levelGrid,0.75f, 17, 10, V2(1.5f,-0.75f));
 
 	editorData->UI_PortraitPositions[0] = V2(-7.06f, 2.32f);
 	editorData->UI_PortraitPositions[1] = V2(-5.94f, 2.32f);
 	editorData->UI_PortraitPositions[2] = V2(-7.06f, 1.16f);
 	editorData->UI_PortraitPositions[3] = V2(-5.94f, 1.16f);
 
+	editorData->UI_DrawMode_SelectButton.isActive = true;
+
+	editorData->levelGrid.toggleGrid = true;
+
 	InitializeUI();
+	LoadStaticEntitySprites();
 
 	currentLevel.x = 1;
 	currentLevel.y = 1;
-	currentEntityCategory = EntityCategory_Terrain;
+	currentEntityCategory = EntityCategory_Walls;
+
 
 	gameMode = GameMode_Edit;
 
@@ -844,5 +1032,13 @@ void MyGameUpdate()
 	ClearColor(RGB(0.0f, 0.0f, 0.0f));
 	LogicPhase();
 	RenderPhase();
-	DrawLevelGrid(&editorData->levelGrid);
+
+	if (editorData->levelGrid.toggleGrid)
+	{
+		DrawLevelGrid(&editorData->levelGrid);
+	}
+	else
+	{
+		DrawLevelBorder(&editorData->levelGrid);
+	}
 }

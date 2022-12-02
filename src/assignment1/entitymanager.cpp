@@ -1,18 +1,28 @@
+#include "assignment1/animation.cpp"
+
 enum EntityType
 {
-    EntityType_Wall,
-    EntityType_Water,
-    EntityType_Tree,
-    EntityType_Rock,
-    EntityType_Player,
-    EntityType_Footman,
+    EntityType_Wall_Rock,      // Walls
+    EntityType_Wall_Wood,
+    EntityType_Wall_Cobble,
+    EntityType_Wall_Bush, 
+    EntityType_Floor_Dirt,     //Floors
+    EntityType_Floor_Grass,
+    EntityType_Floor_Cobble,
+    EntityType_Floor_Wood, 
+    EntityType_Chicken,        //Items
+    EntityType_Potion,
+    EntityType_Bomb,
+    EntityType_Key,
+    EntityType_Water,          //Blockers
+    EntityType_Decor,
+    EntityType_Boulder,
+    EntityType_Door,
+    EntityType_Footman,        //Normans
     EntityType_Crossbowman,
     EntityType_Knight,
     EntityType_Wizard,
-    EntityType_Chicken,
-    EntityType_Potion,
-    EntityType_Coin,
-    EntityType_Bomb,
+    EntityType_Player,        //Not in Editor
     EntityType_Count
 };
 
@@ -35,10 +45,23 @@ struct EntityHandle
 struct Entity
 {
     vec2 position;
-    vec2 lastPosition;
     vec2 direction;
 
+    Sprite sprite;
+
     EntityHandle handle;
+};
+
+struct Boulder : Entity
+{
+    bool destroyable;
+    bool destroyed;
+};
+
+struct Door : Entity
+{
+    bool locked;
+    bool closed;
 };
 
 struct EntityTypeBuffer
@@ -49,26 +72,32 @@ struct EntityTypeBuffer
     void* entities;
 };
 
-struct Footman : Entity
+struct LivingEntity : Entity
 {
-    int8 health;
+    uint8 health;
+    vec2 lastPosition;
+
+    Animation animations[10];
 };
 
-struct Crossbowman : Entity
+struct Crossbowman : LivingEntity
 {
-    int8 health;
+    uint8 shotCooldown;
     uint8 ammo;
 };
 
-struct Knight : Entity
+struct Wizard : LivingEntity
 {
-    int8 health;
+    uint8 shotCooldown;
+    uint8 teleportTimer;
 };
 
-struct Wizard : Entity
+struct Player : LivingEntity
 {
-    int8 health;
-    uint8 teleportTimer;
+    uint8 maxHealth;
+    uint8 bombCount;
+    uint8 keyCount;
+    uint8 potionCount;
 };
 
 struct EntityManager
@@ -158,15 +187,15 @@ void* GetEntity(EntityManager* em, EntityHandle h)
 EntityHandle AddEntity(EntityManager* em, EntityType type) //We need to increment the generation based on the index and incorporate a free list
 {
     int32 ID = em->nextID;
-    if (entityFreeListCount > 0)
-    {
-        ID = entityFreeList[entityFreeListCount];
-        entityFreeListCount--;
-    }
-    else
-    {
+   // if (entityFreeListCount > 0)
+   // {
+       // ID = entityFreeList[entityFreeListCount];
+        //entityFreeListCount--;
+   // }
+   // else
+    //{
        ID = em->nextID++;
-    }
+    //}
 
     EntityInfo* info = &em->entities[ID];
     info->type = type;
@@ -181,7 +210,7 @@ EntityHandle AddEntity(EntityManager* em, EntityType type) //We need to incremen
     info->indexInBuffer = buffer->count;
     buffer->count++;
 
-    Entity* e = (Entity*)&buffer[info->indexInBuffer];
+    Entity* e = (Entity*)((u8*)buffer->entities + (buffer->entitySizeInBytes * info->indexInBuffer));
 
     EntityHandle h = {};
     h.generation = info->generation;
@@ -193,7 +222,7 @@ EntityHandle AddEntity(EntityManager* em, EntityType type) //We need to incremen
     return h;
 };
 
-void DeleteEntities(EntityManager* em) //Adjust for freelist, this uses basic removal by swap.
+void DeleteEntities(EntityManager* em)
 {
     for (int i = 0; i < entityDeleteCount; i++)
     {
@@ -202,36 +231,92 @@ void DeleteEntities(EntityManager* em) //Adjust for freelist, this uses basic re
         {
             EntityTypeBuffer* buffer = &em->buffers[info->type];
             
-            entityFreeList[entityFreeListCount] = info->indexInBuffer;
+
+            Entity* a = (Entity*)((u8*)buffer->entities + (buffer->entitySizeInBytes * info->indexInBuffer)); //initialize A
+            Entity* b = (Entity*)((u8*)buffer->entities + (buffer->entitySizeInBytes * (buffer->count - 1))); //initialize B
+
+            /*
+            entityFreeList[entityFreeListCount] = entitiesToDelete[i];
             entityFreeListCount++;
-            
-            memcpy((u8*)buffer->entities + sizeof(buffer->entitySizeInBytes) * (info->indexInBuffer), 
-                   (u8*)buffer->entities + sizeof(buffer->entitySizeInBytes) * (buffer->count - 1),
-                                           sizeof(buffer->entitySizeInBytes));
+            */
 
-            Entity* e = (Entity*)&buffer[buffer->count - 1];
-            EntityInfo* swappedInfo = &em->entities[e->handle.id];
-            swappedInfo->indexInBuffer = info->indexInBuffer;
+            EntityInfo* swappedInfo = &em->entities[b->handle.id]; //initialize C's handle
 
-            buffer->count--;
+            memcpy(((u8*)buffer->entities + (buffer->entitySizeInBytes * info->indexInBuffer)), //swap data from B's location to A
+                   ((u8*)buffer->entities + (buffer->entitySizeInBytes * (buffer->count - 1))),
+                                             buffer->entitySizeInBytes);
+
+
+            swappedInfo->indexInBuffer = info->indexInBuffer; // Set B's index to A's index
+
+            buffer->count--; //subtract count of buffer by 1
             info->generation++; //NOTE: Do we put generation increment here ?
-
+            info->markedForDeletion = false;
         }
     }
     entityDeleteCount = 0;
 }
 
-void* MarkForDeletion(EntityManager* em, EntityHandle h)
+void MarkForDeletion(EntityManager* em, EntityHandle h)
 {
     EntityInfo* info = GetEntityInfo(em, h);
     if (info == NULL)
     {
-        return NULL;
+        return;
     }
     info->markedForDeletion = true;
 
     entitiesToDelete[entityDeleteCount] = h.id;
     entityDeleteCount++;
+}
 
-    return info;
+bool IsEntityTypeAtLocation(EntityManager* em, EntityType type, vec2 location)
+{
+    EntityTypeBuffer* buffer = &em->buffers[type];
+
+    bool entityAtLocation = false;
+
+    for (int i = 0; i < buffer->count; i++)
+    {
+        Entity* e = (Entity*)((u8*)buffer->entities + (buffer->entitySizeInBytes * i));
+
+        if (e->position == location)
+        {
+            entityAtLocation = true;
+            break;
+        }
+        else
+        {
+            continue;
+        }
+    }
+
+    return entityAtLocation;
+}
+
+EntityHandle GetEntityAtPosition(EntityManager* em, vec2 location)
+{
+    for (int i = 0; i < EntityType_Count; i++)
+    {
+        EntityTypeBuffer* buffer = &em->buffers[i];
+
+        for (int n = 0; n < buffer->count; n++)
+        {
+            Entity* posEntity = (Entity*)((u8*)buffer->entities + (buffer->entitySizeInBytes * n));
+
+            if (posEntity->position == location)
+            {
+                return posEntity->handle;
+            }
+        }
+    }
+}
+
+
+void RemoveEntityAtPosition(EntityManager* em, vec2 position)
+{
+    EntityHandle removeHandle = GetEntityAtPosition(em, position);
+    EntityInfo* info = &em->entities[removeHandle.id];
+
+    MarkForDeletion(em, removeHandle);
 }

@@ -72,6 +72,24 @@ void DrawLevelGrid(LevelGrid* grid)
 	}
 }
 
+void DrawLevelBorder(LevelGrid* grid)
+{
+	for (int y = 0; y < grid->gridHeight + 1; y++)
+	{
+		if (y > 0 && y < grid->gridHeight) { continue; }
+		vec2 rowLineCenter = grid->gridOrigin + V2((grid->gridSize.x * 0.5f), 0) + V2(0, -y * grid->tileSize);
+		DrawRect(rowLineCenter, V2(grid->gridSize.x * 0.5f + (grid->lineThickness), grid->lineThickness), V4(1, 1, 1, 0.5f));
+	}
+
+	for (int x = 0; x < grid->gridWidth + 1; x++)
+	{
+		if (x > 0 && x < grid->gridWidth) { continue; }
+
+		vec2 colLineCenter = grid->gridOrigin + V2(0, (-grid->gridSize.y * 0.5f)) + V2(x * grid->tileSize, 0);
+		DrawRect(colLineCenter, V2(grid->lineThickness, grid->gridSize.y * 0.5f + (grid->lineThickness)), V4(1, 1, 1, 0.5f));
+	}
+}
+
 void SetGridSize(LevelGrid* grid, float tileSize, uint32 newWidth, uint32 newHeight, vec2 gridOffset)
 {
 	grid->gridWidth = Clamp(newWidth, 1, 255);

@@ -335,8 +335,9 @@ void DrawSprite(vec2 position, vec2 scale, real32 angle, real32 transparency, Sp
     glDisableVertexAttribArray(texcoord);    
 }
 
+
 void DrawSprite(vec2 position, vec2 scale, real32 transparency, Sprite* texture) {
-    DrawSprite(position, scale, 0.0f, transparency, texture);
+    DrawSprite(position, scale, 0.0f, 1, texture);
 }
 
 void DrawSprite(vec2 position, vec2 scale, Sprite *texture) {
